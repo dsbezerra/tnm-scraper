@@ -1,0 +1,21 @@
+{
+  "name": "tnm-scraper",
+  "version": "1.0.0",
+  "description": "Scraper API",
+  "main": "tnm.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Diego Bezerra",
+  "license": "ISC",
+  "dependencies": {
+    "async": "^2.0.1",
+    "cheerio": "^0.20.0",
+    "express": "^4.14.0",
+    "request": "^2.74.0",
+    "winston": "^2.2.0"
+  },
+  "devDependencies": {
+    "iconv-lite": "^0.4.13"
+  }
+}

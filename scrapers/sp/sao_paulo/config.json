@@ -1,0 +1,18 @@
+{
+  "baseUrl": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
+  "startUrl": "http://e-negocioscidadesp.prefeitura.sp.gov.br/DetalheLicitacao.aspx?l=lcDOt0DKSK0%3d",
+  "aspnet": true,
+  "pageCharset": "iso-8859-1",
+  "selectors": {
+    "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
+    "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital",    
+    "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
+    "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
+    "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
+    "date": ["#ctl00_cphConteudo_frmDetalheLicitacao_lblAbertura", "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao"]
+  },
+  "patterns": {
+    "agency": "[A-Z]{2,}",
+    "date": "\\d{2}\/\\d{2}\/\\d{2,4}"
+  }
+}
