@@ -9,10 +9,15 @@
     "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
     "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
     "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
-    "date": ["#ctl00_cphConteudo_frmDetalheLicitacao_lblAbertura", "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao"]
+    "date": [
+      "#ctl00_cphConteudo_frmDetalheLicitacao_lblAbertura",
+      "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao"
+    ]
   },
   "patterns": {
     "agency": "[A-Z]{2,}",
     "date": "\\d{2}\/\\d{2}\/\\d{2,4}"
+  },
+  "ignore": {
+    "modality": "convênio"
   }
-}
