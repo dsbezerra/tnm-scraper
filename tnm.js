@@ -1,5 +1,10 @@
-/*var cheerio = require('cheerio');
 var request = require('request');
+
+request('http://download.pokefast.net', function(err, response, body) {
+  console.log(body);
+});
+
+/*var cheerio = require('cheerio');
 
 var INIT_URL = 'http://e-negocioscidadesp.prefeitura.sp.gov.br/';
 var defaultHeaders = {

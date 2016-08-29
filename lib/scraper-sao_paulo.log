@@ -1,0 +1,11 @@
+[ 22:29:22 ] (INFO)	- Scraper: Initializing scraper...
+[ 22:29:22 ] (DEBUG)	- Scraper: ASPNet form handler enabled.
+[ 22:29:22 ] (DEBUG)	- Scraper: Cookies enabled.
+[ 22:29:22 ] (DEBUG)	- Scraper: Follow all redirects enabled.
+[ 22:29:22 ] (INFO)	- Scraper(RoutineQueue): Starting routine: GetSession
+[ 22:29:22 ] (DEBUG)	- Scraper(GetSession): Requesting URI 'http://e-negocioscidadesp.prefeitura.sp.gov.br/'.
+[ 22:29:23 ] (DEBUG)	- Scraper: Page charset found (iso-8859-1). Start decoding...
+[ 22:29:23 ] (DEBUG)	- Scraper: Finished decoding page.
+[ 22:29:23 ] (DEBUG)	- Scraper(getAspNetFormData): Start extracting ASP.NET form data...
+[ 22:29:23 ] (DEBUG)	- Scraper(getAspNetFormData): Finished extracting ASP.NET form data.
+[ 22:29:23 ] (INFO)	- Scraper: Next request in 2s

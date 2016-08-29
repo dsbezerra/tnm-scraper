@@ -1,23 +1,49 @@
 {
-  "baseUrl": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
-  "startUrl": "http://e-negocioscidadesp.prefeitura.sp.gov.br/DetalheLicitacao.aspx?l=lcDOt0DKSK0%3d",
+  "name": "sao_paulo",
+  "baseURI": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
+  "delay": 2000,
+  "charset": "iso-8859-1",
   "aspnet": true,
-  "pageCharset": "iso-8859-1",
-  "selectors": {
-    "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
-    "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital",    
-    "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
-    "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
-    "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
-    "date": [
-      "#ctl00_cphConteudo_frmDetalheLicitacao_lblAbertura",
-      "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao"
-    ]
-  },
-  "patterns": {
-    "agency": "[A-Z]{2,}",
-    "date": "\\d{2}\/\\d{2}\/\\d{2,4}"
-  },
-  "ignore": {
-    "modality": "convênio"
-  }
+  "randomizeDelay": true,
+  "routine": [
+    {
+      "id": "GET_SESSION",
+      "name": "GetSession"
+    },
+    {
+      "id": "GET_LINKS",
+      "name": "GetLinks",
+      "request": {
+        "postURI": "Default.aspx",
+        "method": "POST",
+        "form": {
+          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl04$lbtPainelLicitacoes"
+        }
+      },
+      "list": true,
+      "pagination": true,
+      "selectors": {
+        "container": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent",
+        "link": "tr",
+        "nextPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrNext_lbtText",
+        "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText"
+      }
+    },
+    {
+      "id": "GET_DETAILS",
+      "name": "GetDetails",
+      "selectors": {
+        "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
+        "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
+        "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
+        "date": "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao",
+        "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
+        "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
+      },
+      "patterns": {
+        "agency": "[A-Z]\\S*$",
+        "date": "\\d{2}\/\\d{2}\\/\\d{4}"
+      }
+    }
+  ]
+}

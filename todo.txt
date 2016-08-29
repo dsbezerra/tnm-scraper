@@ -1,0 +1,21 @@
+
+
+TODO LIST
+
+
+Scrapers
+
+[x] São Paulo (http://e-negocioscidadesp.prefeitura.sp.gov.br/)
+
+
+Scraper Helper
+
+[x] Support ASPNET forms.
+[x] Support pagination (actual is working in E-Negócios-SP)
+[ ] Redo GetSession routine
+[ ] Redo resolveLinks and extractLinks function
+[ ] Load PDF and extract amount from notices
+[ ] Persist notices in disk and save last successfull scrape and date
+
+[ ] Make UI in web-admin project to handle these scrapers
+[ ] Train neural network to classify categories

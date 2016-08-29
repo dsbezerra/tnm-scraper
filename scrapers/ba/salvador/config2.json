@@ -1,5 +1,7 @@
 {
-  "baseUrl": "http://www.compras.salvador.ba.gov.br/",
+  "name": "salvador",
+  "baseURI": "http://www.compras.salvador.ba.gov.br/",
+  "charset": "utf-8",
   "delay": 5000,
   "randomizeDelay": true,
   "routine": [
@@ -7,13 +9,13 @@
       "id": "GET_LINKS",
       "name": "GetLinks",
       "request": {
-        "baseUrl": "http://www.compras.salvador.ba.gov.br/novo/",
-        "postUrl": "?secao=licitacao_busca",
+        "baseURI": "http://www.compras.salvador.ba.gov.br/novo/",
+        "postURI": "?secao=licitacao_busca",
         "method": "POST",
         "form": {
           "modalidade": 0,
           "ordenacao": "lipr.lipr_data",
-          "periodo_inicio": "20/09/2016"
+          "periodo_inicio": "10/09/2016"
         }
       },
       "list": true,
@@ -25,9 +27,13 @@
     {
       "id": "GET_DETAILS",
       "name": "GetDetails",
+      "request": {
+        "baseURI": "http://www.compras.salvador.ba.gov.br/novo/",
+        "method": "GET"
+      },
       "selectors": {
         "modality": "body > div.quem_somos > div > div:nth-child(2) > div > h1",
-        "link": "a[target='_blank']"
+        "link": "body > div.quem_somos > div a[target='_blank']"
       },
       "patterns": {
         "date": "\\d{2}\/\\d{2}\\/\\d{4}",
