@@ -1,22 +1,46 @@
-﻿{
-  "baseUrl": "http://www.compras.salvador.ba.gov.br/",
-  "selectors": {
-    "byElement": false,
-    "container": "#licitacoes",
-    "modality": "body > div.quem_somos > div > div:nth-child(2) > div > h1",
-    "number": "body > div.quem_somos > div > div:nth-child(6) > p",
-    "agency": "body > div.quem_somos > div > div:nth-child(8) > p",
-    "description": "body > div.quem_somos > div > div:nth-child(11) > p",
-    "date": [
-      "body > div.quem_somos > div > div.grid_8 > p",
-      "body > div.quem_somos > div > div:nth-child(5) > p"
-    ],
-    "link": "body > div.quem_somos > div > div:nth-child(13) > p > a"
-  },
-  "patterns": {
-    "description": "(?![Objeto:\\ ]).*",
-    "date": "\\d{2}\/\\d{2}\\/\\d{4}",
-    "agency": "((?![Órgão Licitante:\\ ])).*",
-    "number": "\\d{3,}\\/\\d{4}"
-  }
+{
+  "name": "salvador",
+  "baseURI": "http://www.compras.salvador.ba.gov.br/",
+  "charset": "utf-8",
+  "delay": 5000,
+  "randomizeDelay": true,
+  "routine": [
+    {
+      "id": "GET_LINKS",
+      "name": "GetLinks",
+      "request": {
+        "baseURI": "http://www.compras.salvador.ba.gov.br/novo/",
+        "postURI": "?secao=licitacao_busca",
+        "method": "POST",
+        "form": {
+          "modalidade": 0,
+          "ordenacao": "lipr.lipr_data",
+          "periodo_inicio": "10/09/2016"
+        }
+      },
+      "list": true,
+      "selectors": {
+        "container": "body > div.quem_somos > div:nth-child(3)",
+        "link": "div.link_noticias"
+      }
+    },
+    {
+      "id": "GET_DETAILS",
+      "name": "GetDetails",
+      "request": {
+        "baseURI": "http://www.compras.salvador.ba.gov.br/novo/",
+        "method": "GET"
+      },
+      "selectors": {
+        "modality": "body > div.quem_somos > div > div:nth-child(2) > div > h1",
+        "link": "body > div.quem_somos > div a[target='_blank']"
+      },
+      "patterns": {
+        "date": "\\d{2}\/\\d{2}\\/\\d{4}",
+        "agency": "(?:Órgão) (?:Licitante|Solicitante): ([A-Z]*)",
+        "description": "(?:Objeto): (.*)",
+        "number": "(?:Número): (\\d{3}\/\\d{4})"
+      }
+    }
+  ]
 }
