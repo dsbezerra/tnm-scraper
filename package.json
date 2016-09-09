@@ -14,8 +14,6 @@
     "colors": "^1.1.2",
     "express": "^4.14.0",
     "iconv-lite": "^0.4.13",
-    "pdfjs-dist": "^1.5.404",
-    "pdfjs-dist-for-node": "^1.0.892-rc.1",
     "request": "^2.74.0",
     "url": "^0.11.0"
   }
