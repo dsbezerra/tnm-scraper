@@ -13,13 +13,11 @@ function scrape(config, options, callback) {
     options = {};
   }
   
-  parseConfig(config, function(result) {
-    
-    // Append options and callback to config
-    result= Object.assign(result, options);
-    result.callback = callback;
-    return new scraper(result);
-  });
+  var config = parseConfig(config);
+  // Append options and callback to config
+  config = Object.assign(config, options);
+  config.callback = callback;
+  return new scraper(config);
 }
 
 /**
@@ -27,21 +25,14 @@ function scrape(config, options, callback) {
  * @param {string} configPath Absolute path to config file
  * @param {object} options Options of scraper
  */
-function parseConfig(configPath, callback) {
+function parseConfig(configPath) {
   if(typeof configPath !== 'string') {
     throw new Error('configPath must be an absolute path');
   }
 
-  fs.readFile(configPath, defaultEnconding, function(err, contents) {
-    if(err) {
-      throw new Error(err.message);
-    }
-
-    var result = {};
-    result = JSON.parse(contents);
-    callback(result);
-   
-  });
+  var fileContents = fs.readFileSync(configPath, defaultEnconding);
+  var result = JSON.parse(fileContents);
+  return result;
 }
 
 module.exports = scrape;

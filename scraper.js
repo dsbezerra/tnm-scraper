@@ -4,12 +4,15 @@
  * TODO(diego): Logging
  */
 
-var async = require('async'),
-    request = require('request'),
-    cheerio = require('cheerio'),
-    iconv = require('iconv-lite'),
-    fs = require('fs'),
-    logger = require('./logger');
+var async               = require('async'),
+    request             = require('request'),
+    cheerio             = require('cheerio'),
+    iconv               = require('iconv-lite'),
+    fs                  = require('fs'),
+    logger              = require('./logger'),
+    url                 = require('url'),
+    util                = require('util'),
+    EventEmitter        = require('events');
     
 
 var defaultHeaders = {
@@ -88,6 +91,10 @@ function isFileDownloadLink(string) {
   );
 }
 
+function resolveRelativeURI(currentURI, relativeURI) {
+  return url.resolve(currentURI, relativeURI);
+}
+
 /**
  * Extracts download information to a object
  * @param {string} selector Selector of the content
@@ -101,15 +108,18 @@ function isFileDownloadLink(string) {
  *   fileFormat: {string} File Format
  * }
  */
-function extractDownloadInfo(selector, $) {
+function extractDownloadInfo(selector, currentURI, container, $) {
 
   var element = $(selector);
   var href = element.attr('href');
   var text = element.text().trim();
   var lowerCaseText = text.toLowerCase();
+
+  href = href.replace(/&amp;/g, '&');
   
   var info = {
-    relativeUri: href
+    relativeUri: href,
+    uri: resolveRelativeURI(currentURI, href)
   };
 
   if (isFileDownloadLink(text)) {
@@ -127,6 +137,10 @@ function extractDownloadInfo(selector, $) {
 // TODO(diego): Doc
 function execRegex(pattern, input) {
 
+  if(typeof pattern !== 'object') {
+    pattern = new RegExp(pattern);
+  }
+  
   var result = input;
   
   if(typeof pattern !== 'undefined') {
@@ -142,6 +156,10 @@ function execRegex(pattern, input) {
       }
     }
     else {
+
+      // Remove extra line spaces and line breaks
+      input = input.replace(/(\r\n|\n|\r|\s+)/gm, " ").replace(/\s{2,}/gm, "\n");
+
       var match = pattern.exec(input);
       if(match) {
         if(match.length === 1) {
@@ -245,9 +263,12 @@ function getSubStringBetween(char, string) {
 
 
 function getAspNetFormData(cheerio, eventTarget) {
-  var result = {};
+
   var _TAG = `${TAG}(getAspNetFormData)`;
-  Log.d(_TAG, 'Start extracting ASP.NET form data...');
+  
+  var result = {};
+  
+  //Log.d(_TAG, 'Start extracting ASP.NET form data...');
   var eventValidation    = cheerio('#__EVENTVALIDATION').val();
   var viewStateGenerator = cheerio('#__VIEWSTATEGENERATOR').val();
   var viewState          = cheerio('#__VIEWSTATE').val();
@@ -262,13 +283,16 @@ function getAspNetFormData(cheerio, eventTarget) {
     result['__EVENTTARGET']        = eventTarget;
   }
  
-  Log.d(_TAG, 'Finished extracting ASP.NET form data.');
+  //Log.d(_TAG, 'Finished extracting ASP.NET form data.');
   
   return result;
 }
 
 /* Load body */
 function loadBody(charset, body) {
+
+  var _TAG = `${TAG}(loadBody)`;
+  
   var result;
 
   if(typeof charset !== 'string') {
@@ -277,252 +301,17 @@ function loadBody(charset, body) {
   }
   
   if(charset) {
-    Log.d(TAG, 'Page charset found (' + charset + '). Start decoding...');
+    Log.d(_TAG, 'Page charset found (' + charset + '). Start decoding...');
     result = cheerio.load(iconv.decode(body, charset), {
       decodeEntities: false
     });
-    Log.d(TAG, 'Finished decoding page.');
+    Log.d(_TAG, 'Finished decoding page.');
   }
   else {
     result = cheerio.load(body);
   }
 
   return result;
-}
-
-/* Performs a request */
-TNMScraper.prototype.performRequest = function(params, callback) {
-
-  var _TAG = `${TAG}(performRequest)`;
-  
-  var self = this;
-  var method, uri, headers, form;
-
-  if(self.request) {
-    Log.d(_TAG, 'Setting up request parameters.');
-    if(params.uri) {
-      uri = params.uri;
-    }
-    else if(params.baseURI) {
-      uri = params.baseURI;
-    }
-    else {
-      var err = new Error('baseURI must be a valid parameter!');
-      Log.e(_TAG, 'baseURI must be a valid parameter!');
-      return callback(err, null);
-    }
-
-    Log.d(_TAG, 'URI: ' + uri);
-    
-    if(params.method) {
-      method = params.method;
-    }
-    else {
-      method = 'GET';
-    }
-
-    if(params.postURI) {
-      uri = uri + params.postURI;
-      if(method !== 'POST') {
-        method = 'POST';
-      }
-      else {
-        // TODO(diego): Logging info
-      }
-    }
-
-    Log.d(_TAG, 'Method: ' + method);
-
-    if(method === 'POST') {
-      if(params.form) {
-        form = params.form;
-      }
-      else {
-        var err = new Error('POST request must have a post data, check the form parameter!');
-        return callback(err, null);
-      }
-    }
-    else {
-      if(params.form) {
-        form = params.form;
-      }     
-    }
-
-    Log.d(_TAG, 'Form: ', form);
-
-    headers = params.headers || defaultHeaders || {};
-
-    Log.d(_TAG, 'Headers: ', headers);
-  }
-  else {
-    var err = new Error('request parameter is invalid!');
-    return callback(err, null);
-  }
-
-  var options = {
-    method: method,
-    uri: uri,
-    headers: headers,
-    form: form
-  };
-
-  Log.d(_TAG, 'Setting up request parameters completed.');
-
-  var delay = MIN_DELAY;
-  if(self.options.randomizeDelay) {
-    var random = Math.random() * self.delay + MIN_DELAY;
-    delay = Math.round(random);
-  }
-
-  var seconds = Math.round(delay / 1000);
-  Log.i(TAG, `Request in ${seconds}s`);
-
-  setTimeout(function() {
-    Log.i(_TAG, 'Requesting URL: ' + uri + ' (' + method + ')');
-    self.request(options, function(err, response, body) {
-      if(err) {
-        return callback(err, null);
-      }
-      var page = {
-        uri: response.request.uri.href,
-        path: response.request.uri.path,
-        '$': loadBody(self.options.charset, body)      
-      };
-
-      //self.currentPage = page;
-  
-      return callback(null, page);
-    });
-
-  }, delay);
-}
-
-/* Handles the pagination change */
-TNMScraper.prototype.handlePagination = function (callback) {
-  var self = this;
-  
-  var routine = self.routine[self.currentRoutine];
-  var options = self.options;
-  var selectors = routine.selectors;
-  var requestParams = routine.request;
-  var nextPage, combinedLinks = [];  
-
-  if(!requestParams) {
-    Log.e(TAG, 'routine has no property request');
-    return callback('routine has no property request', null);
-  }
-  
-  if(!routine.request.baseURI) {
-    requestParams.baseURI = options.baseURI;
-  }
-
-  if(self.aspnet) {
-    Object.assign(requestParams.form,
-                  self.aspNetForm);
-  }
-  
-  async.doWhilst(
-    function(next) {
-      self.performRequest(requestParams, function(err, page) {
-        // Update nextPage
-        var $ = page['$'];
-        
-        nextPage = $(selectors.nextPage);
-        if(nextPage) {
-          nextPage = nextPage.attr('href');
-          nextPage = checkForDoPostBack(nextPage);
-        }
-
-        // Reset request params
-        requestParams = {};
-        requestParams.uri = page.uri;
-        // TODO(diego): See if this can be always POST
-        requestParams.method = 'POST';
-
-        // Update form parameters
-        if(self.aspnet) {
-          self.aspNetForm = getAspNetFormData($, nextPage || routine.request.form['__EVENTTARGET']);
-          requestParams.form = self.aspNetForm;
-        }
-        
-        var extractedLinks = extractLinks(options, routine, $);
-        self.resolveLinks(extractedLinks, $, requestParams.uri, function(err, result) {
-          if(err) {
-            return callback(err, null);
-          }
-
-          if(Array.isArray(result)) {
-            combinedLinks = combinedLinks.concat(result);
-            //next();
-            return callback(null, combinedLinks);
-          }
-        });
-        
-      });
-    },
-    function() {
-      return nextPage !== undefined && nextPage !== null;
-    },
-    function(err, result) {
-      if(err) {
-        return callback(err, null);
-      }
-      return callback(null, result);
-    }
-  );
-}
-
-/* Resolve links */
-TNMScraper.prototype.resolveLinks = function(links, page, uri, callback) {
-  var self = this;
-  var linkIndex = 0;
-  var isASPNet = self.aspnet;
-  
-  if(!isUriValid(links[0])) {
-    async.whilst(
-      function() { return linkIndex < links.length; },
-      function(next) {
-        if(isASPNet) {
-
-          var requestParams = {
-            method: 'POST',
-            uri: uri,
-            headers: defaultHeaders
-          };
-
-          var form = getAspNetFormData(page, links[linkIndex]);
-          requestParams.form = form;
-
-          self.performRequest(requestParams, function(err, page) {
-            if(err) {
-              return callback(err, null);
-            }
-
-            links[linkIndex] = page.uri;
-            linkIndex++;
-            next();
-          });
-        }
-      },
-      function(err) {
-        callback(null, links);
-      }
-    );
-  }
-  else {
-    var routine = self.routine[self.currentRoutine];
-    if(routine.request && routine.request.baseURI) {
-      while(linkIndex < links.length) {
-        var baseURI = routine.request.baseURI;
-        links[linkIndex] = baseURI + links[linkIndex++];
-      }
-    }
-    else {
-      // TODO(diego): See what we can do here...
-    }
-
-    callback(null, links);
-  }
 }
 
 /**
@@ -627,33 +416,68 @@ function checkForDoPostBack(href) {
 }
  
 function TNMScraper(options) {
-
+  
   var self = this;
   var _options = options || { cookies: true, followRedirects: true };
 
-  Log = new logger({ DEBUG: true, persist: true, name: _options.name });
+  Log = new logger({ DEBUG: false, persist: true, name: _options.name });
+
+  EventEmitter.call(self);  
   
   // Scraper request object
   self.request = request;
-
+  // Scraper configuration
   self.options = _options;
-  
+  // Callback that handles final result
+  self.completeCallback = _options.callback;
+  // Routine object
   self.routine = null;
+  // Routine queue
   self.routineQueue = null;
-  self.currentRoutine = 0;
-  self.totalRoutines  = 0;
-
-  // Results
+  
+  // Scraper result object contaning all routines results
   self.results = {};
 
-  self.currentPage = null;
-
+  // Flag to control if we have an aspnet form or not
   self.aspnet    = false;
+  // Used to persist ASP.NET form between requests
   self.aspNetForm = {};
+  // Delay used between requests (may be changed with a .json property)
   self.delay = MIN_DELAY;
+
+  // To keep track of scraper progress
+  self.stats = {
+
+    isRunning: false,
+    error: {},
+    
+    // Biddings Stats
+    totalBiddings: 0,
+    currentBidding: 0,
+    
+    // Routines Stats
+    totalRoutines: 0,
+    currentRoutine: 0,
+
+    // Pagination Stats
+    totalPages: 0,
+    currentPage: 0
+  }
   
-  self.init(_options);
+  delete _options.callback;
+  
+  self.init(_options);  
 }
+
+// To emit events we need this to be subclass 
+util.inherits(TNMScraper, EventEmitter);
+
+TNMScraper.prototype.emitAsync = function(event, data) {
+  var self = this;
+  setImmediate(function() {
+    self.emit(event, data);
+  });
+};
 
 /**
  * Initializes the scraper then start
@@ -664,6 +488,11 @@ TNMScraper.prototype.init = function(options) {
   Log.i(TAG, 'Initializing scraper...');
   
   var self = this;
+  var stats = self.stats;
+
+  stats.message = 'Inicializando scraper...';
+  self.emitAsync('stats', stats);
+  
   var options = self.options;
   
   // Check for ASPForm Handler
@@ -675,49 +504,6 @@ TNMScraper.prototype.init = function(options) {
   if(options.state) {
     self.state = options.state;
   }
-  
-  /*Check for startUrl configuration, ignores all invalid uris
-  if(options.startUrl) {
-    var startUrl = options.startUrl;
-    if(isArray(startUrl)) {
-      var someUrisAreInvalid = false;
-      var invalidUris = [];
-      var validUris   = [];
-      for(var i = 0; i < startUrl.length; ++i) {
-        if(!isUriValid(startUrl[i])) {
-          if(!someUrisAreInvalid) {
-            someUrisAreInvalid = true;
-          }
-          
-          invalidUris.push(startUrl[i]);
-        }
-        else {
-          validUris.push(startUrl[i]);
-        }
-      }
-
-      if(someUrisAreInvalid) {
-        Log.w(TAG, "One or more uris are invalid! The following uris are invalid: ");
-        Log.w(TAG, invalidUris.join('\n'));
-        Log.i(TAG, 'Ignoring invalid uris ');
-        options.startUrl = validUris;
-      }
-
-      Log.i(TAG, 'Start URL defined to: ');
-      Log.i(TAG, options.startUrl.join('\n'));
-    }
-    else if(!isUriValid(options.startUrl)) {
-      throw new Error('uri must be a valid URL');
-    }
-    else {
-      Log.i(TAG, 'Start URL defined to ' + options.startUrl);
-    }
-  }
-  else {
-    throw new Error('startUrl is required to begin scraping');
-  }
-
-  */
   
   // Check for delay configuration
   if(options.delay) {
@@ -760,10 +546,10 @@ TNMScraper.prototype.init = function(options) {
 
   if(options.routine) {
     self.routine = options.routine;
-    self.totalRoutines = options.routine.length;
+    stats.totalRoutines = options.routine.length;
 
     // Initialize regex strings to RegExp object
-    for(var routineIndex = 0; routineIndex < self.totalRoutines; ++routineIndex) {
+    for(var routineIndex = 0; routineIndex < options.routine.length; ++routineIndex) {
       var patterns = self.routine[routineIndex].patterns;
       if(patterns) {
         var keys = Object.keys(patterns);
@@ -786,28 +572,40 @@ TNMScraper.prototype.init = function(options) {
  * Start the scraper routines
  */
 TNMScraper.prototype.start = function() {
-
+  
   var self = this;
+  var stats = self.stats;
   var _TAG = `${TAG}(RoutineQueue)`;
 
+  self.emitAsync('start', 'Scraper started!');
+  stats.message = 'Iniciando rotinas...';
+  self.stats.isRunning = true;
+  self.emitAsync('stats', stats);
+  
   // Define queue
   self.routineQueue = async.queue(function(routine, callback) {
     var id = routine.id;
     Log.i(_TAG, 'Starting routine: ' + routine.name);
+    self.emitAsync('routine', id);
     switch(id) {
       case GET_SESSION:
       {
+        stats.message = 'Adquirindo sessão...';
         self.getSession(callback);
       } break; 
       case GET_LINKS:
       {
+        stats.message = 'Extraindo links...';
         self.scrapeLinks(callback);
       } break;
       case GET_DETAILS:
       {
+        stats.message = 'Extraindo detalhes das licitações...';
         self.scrapeDetails(callback);
       } break;
     }
+
+    self.emitAsync('stats', stats);
   });
 
   // Loop through all routines and add to queue
@@ -820,16 +618,28 @@ TNMScraper.prototype.start = function() {
         return;
       }
 
-      var routineId = routine[self.currentRoutine].id;
+      var routineId = routine[stats.currentRoutine].id;
       self.results[routineId] = result;
       
-      Log.i(_TAG, 'Finished routine: ' + routine[self.currentRoutine++].name, result);
+      Log.i(_TAG, 'Finished routine: ' + routine[stats.currentRoutine++].name, result);
+
+      self.emitAsync('stats', stats);
     });
   }
 
   // Complete
-  self.routineQueue.drain = function(err, result) {
-    //console.log(result);
+  self.routineQueue.drain = function(err) {
+    if(self.completeCallback) {
+      if(err) {
+        return self.completeCallback(err, null);
+      }
+
+      var notices = self.results['GET_DETAILS'];
+
+      self.stats.isRunning = false;
+      self.emitAsync('stats', self.stats);
+      return self.completeCallback(null, notices);
+    }
   }
 }
 
@@ -839,45 +649,33 @@ TNMScraper.prototype.start = function() {
  * Must be used to get cookies or ASPNet form data populated (example E-Negócios-SP)
  * @param {function} callback Callback that notify the routine queue to advance
  */
-TNMScraper.prototype.getSession = function(callback) {
+TNMScraper.prototype.getSession = function(next) {
+
+  var _TAG = `${TAG}(GetSession)`;
+  
   var self = this;
   var options = self.options;
-  var _TAG = `${TAG}(GetSession)`;
-
   // Use baseURI as request uri to get session
   if(options.baseURI) {
-    var _options = {
-      method: 'GET',
-      uri: options.baseURI,
-      headers: defaultHeaders
+    var requestParams = {
+      uri: options.baseURI
     };
 
-    Log.d(_TAG, 'Requesting URI \'' + _options.uri + '\'.');
-    self.request(_options, function(err, response, body) {
+    self.performRequest(requestParams, function(err, page) {
       if(err) {
-        return callback(new Error(err));
+        return callback(err, null);
       }
 
-
-      var $ = loadBody(options.charset, body);
+      var $ = page['$'];
+      if(self.aspnet) {
+        self.aspNetForm = getAspNetFormData($);
+      }
       
-      if(options.aspnet) {
-        self.aspNetForm = getAspNetFormData($, '');
-        if(self.aspNetForm) {
-          if(options.delay) {
-            Log.i(TAG, 'Next request in ' + Math.round(options.delay / 1000) + 's');
-            setTimeout(function() {
-              callback(null, null);
-            }, options.delay);
-          }
-        }
-      }
-      else {
-        // TODO(diego): See what we need to do here later.
-        // Do this for now
-        callback(null, null);
-      }
+      next();
     });
+  }
+  else {
+    // TODO(diego): Logging
   }
 }
 
@@ -886,8 +684,9 @@ TNMScraper.prototype.getSession = function(callback) {
 TNMScraper.prototype.scrapeLinks = function(callback) {
 
   var self = this;
-
-  var currentRoutine = self.currentRoutine;
+  var stats = self.stats;
+  
+  var currentRoutine = stats.currentRoutine;
   var routine = self.routine[currentRoutine];
   if(routine) {
     if(routine.pagination) {
@@ -897,6 +696,8 @@ TNMScraper.prototype.scrapeLinks = function(callback) {
         }
 
         Log.d(TAG, 'Scraped links: ', links);
+
+        self.results['GET_LINKS'] = links;
         
         return callback(null, links);
       });
@@ -924,6 +725,8 @@ TNMScraper.prototype.scrapeLinks = function(callback) {
             return callback(err, null);
           }
 
+          self.results['GET_LINKS'] = links;
+          
           return callback(null, links);
         });
       });
@@ -943,12 +746,13 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   var _TAG = `${TAG}(scrapeDetails)`;
   
   var self = this;
+  var stats = self.stats;
   
-  var currentRoutine = self.currentRoutine;
+  var currentRoutine = stats.currentRoutine;
   var routine = self.routine[currentRoutine];
 
   // Detail pages queue
-  var detailsQueue = async.queue(function(detailPageUri, callback) {
+  var detailsQueue = async.queue(function(detailPageUri, next) {
 
     // TODO(diego): Do checks for any wrong paremeter 
     var requestParams = {
@@ -963,11 +767,13 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
 
       var notice = scrapeNotice(page['$'],
                                 routine.selectors,
-                                routine.patterns);
-
+                                routine.patterns,
+                                page.uri);
+      
       if(notice) {
         notice.website = page.uri;
-        callback(null, notice);
+        //self.emitAsync('notice', notice);
+        next(null, notice);
       }
       else {
         Log.w(_TAG, 'Skipping notice from page ' + page.uri);
@@ -979,6 +785,10 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   // scrapeLinks routine results.
   var resultLinks = self.results['GET_LINKS'];
   if(resultLinks) {
+
+    // Update total biddings
+    stats.totalBiddings = resultLinks.length;
+    
     detailsQueue.push(resultLinks, function(err, resultNotice) {
       if(err) {
         return callback(err, null);
@@ -987,8 +797,13 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
       if(!self.results['GET_DETAILS']) {
         self.results['GET_DETAILS'] = [];
       }
-      
       self.results['GET_DETAILS'].push(resultNotice);
+
+
+      // Update current scraping detail
+      stats.currentBidding++;
+
+      self.emitAsync('stats', stats);
     });
   }
 
@@ -996,33 +811,294 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   detailsQueue.drain = function() {
     // Persist notices
     // Save last time
-    console.log(self.results['GET_DETAILS']);
+    callback(null, self.results['GET_DETAILS']);
   }
 }
 
+/* Resolve links */
+TNMScraper.prototype.resolveLinks = function(links, page, uri, callback) {
+  var self = this;
+  var stats = self.stats;
+  
+  var linkIndex = 0;
+  var isASPNet = self.aspnet;
+  
+  if(!isUriValid(links[0])) {
+    async.whilst(
+      function() { return linkIndex < links.length; },
+      function(next) {
+        if(isASPNet) {
+
+          var requestParams = {
+            method: 'POST',
+            uri: uri,
+            headers: defaultHeaders
+          };
+
+          var form = getAspNetFormData(page, links[linkIndex]);
+          requestParams.form = form;
+
+          self.performRequest(requestParams, function(err, page) {
+            if(err) {
+              return callback(err, null);
+            }
+
+            links[linkIndex] = page.uri;
+            linkIndex++;
+            next();
+          });
+        }
+      },
+      function(err) {
+        callback(null, links);
+      }
+    );
+  }
+  else {
+    
+    var routine = self.routine[stats.currentRoutine];
+    if(routine.request && routine.request.baseURI) {
+      while(linkIndex < links.length) {
+        var baseURI = routine.request.baseURI;
+        links[linkIndex] = baseURI + links[linkIndex++];
+      }
+    }
+    else {
+      // TODO(diego): See what we can do here...
+    }
+
+    callback(null, links);
+  }
+}
+
+/* Handles the pagination change */
+TNMScraper.prototype.handlePagination = function (callback) {
+  var self = this;
+  var stats = self.stats;
+  
+  var routine = self.routine[stats.currentRoutine];
+  var options = self.options;
+  var selectors = routine.selectors;
+  var requestParams = routine.request;
+  var nextPage, combinedLinks = [];  
+
+  if(!requestParams) {
+    Log.e(TAG, 'routine has no property request');
+    return callback('routine has no property request', null);
+  }
+  
+  if(!routine.request.baseURI) {
+    requestParams.baseURI = options.baseURI;
+  }
+
+  if(self.aspnet) {
+    Object.assign(requestParams.form,
+                  self.aspNetForm);
+  }
+  
+  async.doWhilst(
+    function(next) {
+      self.performRequest(requestParams, function(err, page) {
+        // Update nextPage
+        var $ = page['$'];
+        
+        nextPage = $(selectors.nextPage);
+        if(nextPage) {
+          nextPage = nextPage.attr('href');
+          nextPage = checkForDoPostBack(nextPage);
+        }
+
+        // Reset request params
+        requestParams = {};
+        requestParams.uri = page.uri;
+        // TODO(diego): See if this can be always POST
+        requestParams.method = 'POST';
+
+        // Update form parameters
+        if(self.aspnet) {
+          self.aspNetForm = getAspNetFormData($, nextPage || routine.request.form['__EVENTTARGET']);
+          requestParams.form = self.aspNetForm;
+        }
+        
+        var extractedLinks = extractLinks(options, routine, $);
+        self.resolveLinks(extractedLinks, $, requestParams.uri, function(err, result) {
+          if(err) {
+            return callback(err, null);
+          }
+
+          if(Array.isArray(result)) {
+            combinedLinks = combinedLinks.concat(result);
+            callback(null, combinedLinks);
+          }
+        });
+        
+      });
+    },
+    function() {
+      return nextPage !== undefined && nextPage !== null;
+    },
+    function(err, result) {
+      if(err) {
+        return callback(err, null);
+      }
+      return callback(null, result);
+    }
+  );
+}
+
+/* Performs a request */
+TNMScraper.prototype.performRequest = function(params, callback) {
+
+  var _TAG = `${TAG}(performRequest)`;
+  
+  var self = this;
+  var method, uri, headers, form;
+
+  if(self.request) {
+    Log.d(_TAG, 'Setting up request parameters.');
+    if(params.uri) {
+      uri = params.uri;
+    }
+    else if(params.baseURI) {
+      uri = params.baseURI;
+    }
+    else {
+      var err = new Error('baseURI must be a valid parameter!');
+      Log.e(_TAG, 'baseURI must be a valid parameter!');
+      return callback(err, null);
+    }
+
+    Log.d(_TAG, 'URI: ' + uri);
+    
+    if(params.method) {
+      method = params.method;
+    }
+    else {
+      method = 'GET';
+    }
+
+    if(params.postURI) {
+      uri = uri + params.postURI;
+      if(method !== 'POST') {
+        method = 'POST';
+      }
+      else {
+        // TODO(diego): Logging info
+      }
+    }
+
+    Log.d(_TAG, 'Method: ' + method);
+
+    if(method === 'POST') {
+      if(params.form) {
+        form = params.form;
+      }
+      else {
+        var err = new Error('POST request must have a post data, check the form parameter!');
+        return callback(err, null);
+      }
+    }
+    else {
+      if(params.form) {
+        form = params.form;
+      }     
+    }
+
+    Log.d(_TAG, 'Form: ', form);
+
+    headers = params.headers || defaultHeaders || {};
+
+    Log.d(_TAG, 'Headers: ', headers);
+  }
+  else {
+    var err = new Error('request parameter is invalid!');
+    return callback(err, null);
+  }
+
+  var options = {
+    method: method,
+    uri: uri,
+    headers: headers,
+    form: form
+  };
+
+  Log.d(_TAG, 'Setting up request parameters completed.');
+
+  var delay = MIN_DELAY;
+  if(self.options.randomizeDelay) {
+    var random = Math.random() * (self.delay - MIN_DELAY) + MIN_DELAY;
+    delay = Math.round(random);
+  }
+
+  var seconds = Math.round(delay / 1000);
+  Log.i(TAG, `Request in ${seconds}s`);
+
+  setTimeout(function() {
+    Log.i(_TAG, 'Requesting URL: ' + uri + ' (' + method + ')');
+    self.request(options, function(err, response, body) {
+      if(err) {
+        return callback(err, null);
+      }
+      
+      var page = {
+        uri: response.request.uri.href,
+        path: response.request.uri.path,
+        '$': loadBody(self.options.charset, body)      
+      };
+      
+      //self.currentPage = page;
+      
+      return callback(null, page);
+    });
+
+  }, delay);
+}
+
 // Parse detail page to notice object
-function scrapeNotice(cheerio, selectors, patterns) {
+function scrapeNotice(cheerio, selectors, patterns, currentURI) {
   var $ = cheerio;
   var result = {};
+  
+  var container = selectors.container;
+  result['modality'] = grabText(selectors.modality,
+                                patterns.modality,
+                                container, $);
+  
+  result['number'] = grabText(selectors.number,
+                              patterns.number,
+                              container, $);
+  
+  result['agency'] = grabText(selectors.agency,
+                              patterns.agency,
+                              container, $);
+  
+  result['date'] = grabText(selectors.date,
+                            patterns.date,
+                            container, $);
 
-  result['modality'] = grabText(selectors.modality, patterns.modality, $);
-  result['number'] = grabText(selectors.number, patterns.number, $);
-  result['agency'] = grabText(selectors.agency, patterns.agency, $);
-  result['date'] = grabText(selectors.date, patterns.date, $);
-  result['download'] = extractDownloadInfo(selectors.link, $);
-  result['description'] = grabText(selectors.description, patterns.description, $);
+  result['download'] = extractDownloadInfo(selectors.link,
+                                           currentURI,
+                                           container, $);
+
+  result['description'] = grabText(selectors.description,
+                                   patterns.description,
+                                   container, $).trim();
 
   // Change modality from string to int
   if(result.modality) {
     result.modality = MODALITIES[result.modality.toLowerCase()];
   }
+
+  if(!result.description.endsWith('.')) {
+    result.description += '.';
+  }
   
   return result;
-  
 }
 
 /* Grab text */
-function grabText(selector, pattern, $) {
+function grabText(selector, pattern, container, $) {
+  
   var result = '';
   if(selector && pattern) {
     var text = $(selector).text().trim();
@@ -1033,7 +1109,15 @@ function grabText(selector, pattern, $) {
     result = text;
   }
   else if (pattern) {
-    var text = $('body').text().trim();
+
+    var text;
+    if(container) {
+      text = $(container).text().trim();
+    }
+    else {
+      text = $('body').text().trim();
+    }
+    
     result = execRegex(pattern, text);
   }
 

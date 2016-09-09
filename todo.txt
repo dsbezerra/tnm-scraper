@@ -12,7 +12,7 @@ Scraper Helper
 
 [x] Support ASPNET forms.
 [x] Support pagination (actual is working in E-Negócios-SP)
-[ ] Redo GetSession routine
+[x] Redo GetSession routine
 [ ] Redo resolveLinks and extractLinks function
 [ ] Load PDF and extract amount from notices
 [ ] Persist notices in disk and save last successfull scrape and date

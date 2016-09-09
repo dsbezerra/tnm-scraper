@@ -1,5 +1,5 @@
 {
-  "name": "salvador",
+"name": "salvador",
   "baseURI": "http://www.compras.salvador.ba.gov.br/",
   "charset": "utf-8",
   "delay": 5000,
@@ -33,12 +33,13 @@
       },
       "selectors": {
         "modality": "body > div.quem_somos > div > div:nth-child(2) > div > h1",
-        "link": "body > div.quem_somos > div a[target='_blank']"
+        "link": "body > div.quem_somos > div a[target='_blank']",
+	"container": "body > div.quem_somos > div"
       },
       "patterns": {
         "date": "\\d{2}\/\\d{2}\\/\\d{4}",
         "agency": "(?:Órgão) (?:Licitante|Solicitante): ([A-Z]*)",
-        "description": "(?:Objeto): (.*)",
+        "description": "(?:Objeto): (.*)(?:Informações Complementares:)",
         "number": "(?:Número): (\\d{3}\/\\d{4})"
       }
     }

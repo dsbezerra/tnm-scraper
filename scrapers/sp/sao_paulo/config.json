@@ -17,7 +17,7 @@
         "postURI": "Default.aspx",
         "method": "POST",
         "form": {
-          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl04$lbtPainelLicitacoes"
+		  "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl03$lbtPainelLicitacoes"
         }
       },
       "list": true,
@@ -25,7 +25,7 @@
       "selectors": {
         "container": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent",
         "link": "tr",
-        "nextPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrNext_lbtText",
+        "nextPage": "#ctl00_cphConteudo_gdvResultadofBusca_pgrGridView_btrNext_lbtText",
         "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText"
       }
     },
@@ -41,7 +41,6 @@
         "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
       },
       "patterns": {
-        "agency": "[A-Z]\\S*$",
         "date": "\\d{2}\/\\d{2}\\/\\d{4}"
       }
     }
