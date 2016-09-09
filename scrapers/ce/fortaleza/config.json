@@ -1,0 +1,38 @@
+{
+  "name": "fortaleza",
+  "baseURI": "http://compras.fortaleza.ce.gov.br/",
+  "charset": "utf-8",
+  "delay": 5000,
+  "randomizeDelay": true,
+  "routine": [
+    {
+      "id": "GET_LINKS",
+      "name": "GetLinks",
+      "request": {
+        "baseURI": "http://compras.fortaleza.ce.gov.br/publico/licitacoes.asp",
+        "method": "GET"
+      },
+      "list": true,
+      "selectors": {
+        "container": "#content-int > div > div.box-content.no-padding > table",
+        "link": "a.licit-detalhes"
+      }
+    },
+    {
+      "id": "GET_DETAILS",
+      "name": "GetDetails",
+      "request": {
+        "baseURI": "http://compras.fortaleza.ce.gov.br/publico/",
+        "method": "GET"
+      },
+      "selectors": {
+        "number": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(1) > td:nth-child(2)",
+        "date": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(5) > td:nth-child(2)",
+        "link": "a.doc-licit"
+      },
+      "patterns": {
+        "number": "\\d{1,}\/\\d{4}"
+      }
+    }
+  ]
+}

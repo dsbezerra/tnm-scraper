@@ -85,9 +85,10 @@ function buildSelectorString(selector) {
 function isFileDownloadLink(string) {
   if(!string) return false;
   return (
-    string.endsWith('.pdf') || string.endsWith('.PDF') ||
-    string.endsWith('.doc') || string.endsWith('.DOC') ||
-    string.endsWith('.zip') || string.endsWith('.ZIP')
+    string.endsWith('.pdf')  || string.endsWith('.PDF')  ||
+    string.endsWith('.doc')  || string.endsWith('.DOC')  ||
+    string.endsWith('.docx') || string.endsWith('.DOCX') ||
+    string.endsWith('.zip')  || string.endsWith('.ZIP')  ||
   );
 }
 
@@ -357,7 +358,14 @@ function extractLinks(options, routine, page) {
             ++itemIndex)
           {
             var item = items[itemIndex];
-            var anchorElement = $(item).find('a');
+            var anchorElement = item;
+            if(item.name !== 'a') {
+              anchorElement = $(item).find('a');
+            }
+            else {
+              anchorElement = $(item);
+            }
+
             if(anchorElement) {
               var hrefAttributeValue = anchorElement.attr('href');
               if(hrefAttributeValue) {
@@ -367,7 +375,7 @@ function extractLinks(options, routine, page) {
               }
               else {
                 Log.d(_TAG, 'HREF Value at ' +
-                           itemIndex + ' invalid.');
+                            itemIndex + ' invalid.');
               }
             }
             else {
@@ -718,9 +726,9 @@ TNMScraper.prototype.scrapeLinks = function(callback) {
         if(err) {
           return callback(err, null);
         }
-
+        
         var extracted = extractLinks(self.options, routine, page['$']);
-        self.resolveLinks(extracted, null, null, function(err, links) {
+        self.resolveLinks(extracted, page, requestParams.baseURI, function(err, links) {
           if(err) {
             return callback(err, null);
           }
@@ -828,7 +836,6 @@ TNMScraper.prototype.resolveLinks = function(links, page, uri, callback) {
       function() { return linkIndex < links.length; },
       function(next) {
         if(isASPNet) {
-
           var requestParams = {
             method: 'POST',
             uri: uri,
@@ -847,6 +854,11 @@ TNMScraper.prototype.resolveLinks = function(links, page, uri, callback) {
             linkIndex++;
             next();
           });
+        }
+        else {
+          links[linkIndex] = resolveRelativeURI(page.uri, links[linkIndex]);
+          linkIndex++;
+          next();
         }
       },
       function(err) {
@@ -880,7 +892,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
   var options = self.options;
   var selectors = routine.selectors;
   var requestParams = routine.request;
-  var nextPage, combinedLinks = [];  
+  var nextPage, prevPage, combinedLinks = [];  
 
   if(!requestParams) {
     Log.e(TAG, 'routine has no property request');
@@ -901,7 +913,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
       self.performRequest(requestParams, function(err, page) {
         // Update nextPage
         var $ = page['$'];
-        
+
         nextPage = $(selectors.nextPage);
         if(nextPage) {
           nextPage = nextPage.attr('href');
@@ -928,7 +940,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
 
           if(Array.isArray(result)) {
             combinedLinks = combinedLinks.concat(result);
-            callback(null, combinedLinks);
+            next(null, result);
           }
         });
         
@@ -937,11 +949,11 @@ TNMScraper.prototype.handlePagination = function (callback) {
     function() {
       return nextPage !== undefined && nextPage !== null;
     },
-    function(err, result) {
+    function(err) {
       if(err) {
         return callback(err, null);
       }
-      return callback(null, result);
+      return callback(null, combinedLinks);
     }
   );
 }
@@ -1060,6 +1072,11 @@ function scrapeNotice(cheerio, selectors, patterns, currentURI) {
   var result = {};
   
   var container = selectors.container;
+
+  if(!patterns) {
+    patterns = {};
+  }
+  
   result['modality'] = grabText(selectors.modality,
                                 patterns.modality,
                                 container, $);

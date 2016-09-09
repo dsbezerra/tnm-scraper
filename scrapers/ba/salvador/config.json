@@ -40,7 +40,7 @@
         "date": "\\d{2}\/\\d{2}\\/\\d{4}",
         "agency": "(?:Órgão) (?:Licitante|Solicitante): ([A-Z]*)",
         "description": "(?:Objeto): (.*)(?:Informações Complementares:)",
-        "number": "(?:Número): (\\d{3}\/\\d{4})"
+        "number": "(?:Número): (\\d{1,}\/\\d{4})"
       }
     }
   ]

@@ -7,7 +7,7 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Diego Bezerra",
-  "license": "ISC",
+  "license": "ISC", 
   "dependencies": {
     "async": "^2.0.1",
     "cheerio": "^0.20.0",
