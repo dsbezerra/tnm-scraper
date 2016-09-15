@@ -7,14 +7,18 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Diego Bezerra",
-  "license": "ISC", 
+  "license": "ISC",
   "dependencies": {
     "async": "^2.0.1",
     "cheerio": "^0.20.0",
     "colors": "^1.1.2",
     "express": "^4.14.0",
     "iconv-lite": "^0.4.13",
+    "mongoose": "^4.6.0",
     "request": "^2.74.0",
     "url": "^0.11.0"
+  },
+  "devDependencies": {
+    "mocha": "^3.0.2"
   }
 }

@@ -1,4 +1,4 @@
-var scraper = require('./scraper'),
+var scraper = require('./src/scraper'),
     fs = require('fs');
 
 var defaultEnconding = 'utf-8';

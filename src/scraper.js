@@ -26,14 +26,26 @@ var TAG = 'Scraper';
 
 var VERBOSE = false;
 var MODALITIES = {
-  'pregão presencial'  : 0,
-  'pregão eletrônico'  : 1,
-  'concorrência'       : 2,
-  'convite'            : 3,
-  'concurso'           : 4,
-  'leilão'             : 5,
-  'tomada de preço'    : 6,
-  'convênio'           : 7
+  'pp'                   : 0,
+  'pregão presencial'    : 0,
+  
+  'pe'                   : 1,
+  'pregão eletrônico'    : 1,
+
+  'concorrência'         : 2,
+  'concorrência pública' : 2,
+  'cp'                   : 2,
+  
+  'convite'              : 3,
+  
+  'concurso'             : 4,
+
+  'leilão'               : 5,
+
+  'tomada de preço'      : 6,
+  'tomada de preços'     : 6,
+
+  'convênio'             : 7
 };
 
 var MIN_DELAY = 1000;
@@ -112,7 +124,7 @@ function resolveRelativeURI(currentURI, relativeURI) {
 function extractDownloadInfo(selector, currentURI, container, $) {
 
   var element = $(selector);
-  var href = element.attr('href');
+  var href = element.attr('href'); 
   var text = element.text().trim();
   var lowerCaseText = text.toLowerCase();
 
@@ -422,6 +434,22 @@ function checkForDoPostBack(href) {
   //value = value.replace(/\$/g, '_');
   return value;
 }
+
+function getNewestDate(scraper) {
+
+  var dateInMilli = 0;
+  
+  if(scraper) {
+    if(scraper.newestResult) {
+      const date = scraper.newestResult.date;
+      if(typeof date === 'object') {
+        dateInMilli = date.getTime();
+      }
+    }
+  }
+
+  return dateInMilli;
+}
  
 function TNMScraper(options) {
   
@@ -452,6 +480,8 @@ function TNMScraper(options) {
   self.aspNetForm = {};
   // Delay used between requests (may be changed with a .json property)
   self.delay = MIN_DELAY;
+
+  self.newest = null;
 
   // To keep track of scraper progress
   self.stats = {
@@ -567,6 +597,10 @@ TNMScraper.prototype.init = function(options) {
         }
       }
     }
+  }
+
+  if(options.scraper) {
+    self.newest = getNewestDate(options.scraper);
   }
 
   self.request = self.request.defaults(requestDefauls);
@@ -773,7 +807,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
         return callback(err, null);
       }
 
-      var notice = scrapeNotice(page['$'],
+      var notice = scrapeNotice(self, page['$'],
                                 routine.selectors,
                                 routine.patterns,
                                 page.uri);
@@ -1067,7 +1101,7 @@ TNMScraper.prototype.performRequest = function(params, callback) {
 }
 
 // Parse detail page to notice object
-function scrapeNotice(cheerio, selectors, patterns, currentURI) {
+function scrapeNotice(self, cheerio, selectors, patterns, currentURI) {
   var $ = cheerio;
   var result = {};
   
@@ -1075,6 +1109,22 @@ function scrapeNotice(cheerio, selectors, patterns, currentURI) {
 
   if(!patterns) {
     patterns = {};
+  }
+
+  result['date'] = grabText(selectors.date,
+                            patterns.date,
+                            container, $);
+
+  //
+  // TODO(diego): make this better
+  //
+  var parts = result.date.split('/');
+  var date = new Date('\'' + parts[2] + '-' + parts[1] + '-' + parts[0] + '\'');
+
+  if(self.newest) {
+    if(self.newest >= date.getTime()) {
+      return null;
+    }
   }
   
   result['modality'] = grabText(selectors.modality,
@@ -1088,10 +1138,6 @@ function scrapeNotice(cheerio, selectors, patterns, currentURI) {
   result['agency'] = grabText(selectors.agency,
                               patterns.agency,
                               container, $);
-  
-  result['date'] = grabText(selectors.date,
-                            patterns.date,
-                            container, $);
 
   result['download'] = extractDownloadInfo(selectors.link,
                                            currentURI,

@@ -1,15 +1,207 @@
-var scrape = require('./index');
+var fs   = require('fs');
 var path = require('path');
+var mongoose = require('mongoose');
 
-var scraper = scrape(path.join('scrapers', 'sp/sao_paulo/config.json'), function(err, result) {
+var scrape = require('./index');
+
+mongoose.Promise = global.Promise;
+
+const Scraper = require('./src/models/scraper');
+const Result  = require('./src/models/result');
+
+
+const FROM_DB = true;
+
+if(FROM_DB) {
+  const user = 'scraper';
+  const pwd = '123456';
+  
+  const uri =
+    `mongodb://${user}:${pwd}@localhost:27017/tnm`;
+  
+  mongoose.connect(uri, (err) => {
+    if(err) {
+      console.log(err);
+      return;
+    }
+
+    // Check if a scraper exists
+    Scraper.findOne({
+      name: 'São Paulo - Pregão Presencial'
+    }).lean().exec((err, scraper) => {
+      if(err) {
+        console.log(err);
+        return;
+      }
+
+      if(scraper) {
+        const scraperPath = path.join('scrapers', scraper._id + '/config.json');
+        const dirPath = path.join('scrapers', String(scraper._id));
+        
+        if(checkValidPaths(dirPath, scraperPath)) {
+          runScraper(scraperPath, scraper, handleResult);
+        }
+      }
+      else {
+
+        // Create scraper
+        Scraper.create({
+          name: 'São Paulo - Pregão Presencial',
+          city: 'São Paulo'
+        }, (err, scraper) => {
+          if(err) {
+            console.log(err);
+            return;
+          }
+
+          const scraperPath = path.join('scrapers', scraper._id + '/config.json');
+          const dirPath = path.join('scrapers', String(scraper._id));
+          
+          if(checkValidPaths(dirPath, scraperPath)) {
+            runScraper(scraperPath, scraper, handleResult);
+          }
+        });
+      }
+    });
+  });
+}
+else {
+
+  // Local
+  const scraperPath = path.join('scrapers', 'sp/sao_paulo/config.json');
+  runScraper(path, function(err, result) {
+    if(err) {
+      console.log(err);
+      return;
+    }
+
+    console.log(result);
+  });
+}
+
+/**
+ * Runs the scraper
+ */
+function runScraper(path, scraper, callback) {
+  if(!path) return;
+
+  let options = {};
+  resolveNewestResult(scraper, (err, result) => {
+    if(result) {
+      scraper.newestResult = result;
+      options['scraper']= scraper;
+    }
+
+    var scraperTask = scrape(path, options, function(err, result) {
+      if(err) return callback(null);
+      if(result) return callback(null, scraper, result);
+    });
+  });
+}
+
+function resolveNewestResult(scraper, callback) {
+  Result.findOne({
+    _id: scraper.newestResult
+  }).lean().exec((err, result) => {
+    if(err) {
+      return callback(null);
+    }
+
+    return callback(null, result);
+  });
+}
+
+
+/**
+ * Handles the result from scraper
+ */
+function handleResult(err, scraper, results) {
   if(err) {
+    console.log(err);
     return;
   }
 
-  console.log(result);
-});
+  let newest = {
+    date:  0,
+    index: 0,
+  }
 
-// Events
-scraper.on('start', function(message) {
-  console.log(message);
-})
+  for(let i = 0; i < results.length; ++i) {
+    const parts = results[i].date.split('/');
+    const date = new Date(`'${parts[2]}/${parts[1]}/${parts[0]}'`);
+    const milliseconds = date.getTime();
+
+    if(milliseconds > newest.date) {
+      newest.date  = milliseconds;
+      newest.index = i;
+    }
+
+    // Changing date from string to Date and adding scraperId
+    results[i].date = date;
+    results[i].scraper = scraper._id;
+    results[i].approved = false;
+  }
+  
+  // Insert results
+  Result.collection.insert(results, (err, insertedResults) => {
+    if(err) {
+      return;
+    }
+    
+    if(insertedResults.length != 0) {
+      // Update newest result
+      const newestId = insertedResults.ops[newest.index]._id;
+      Scraper.update({_id: scraper._id }, { newestResult: newestId}, (err, raw) => {
+        if(err) {
+          console.log(err);
+        }
+      });
+    }
+  });
+
+  console.log('Newest ' + new Date(newest.date));
+}
+
+
+/**
+ * Check if paths are valid
+ */
+function checkValidPaths(dirPath, scraperPath) {
+
+  let isValid = true;
+  
+  if(!isDirectory(dirPath)) {
+    fs.mkdirSync(dirPath);
+  }
+
+  if(!isFile(scraperPath)) {
+    console.log('Couldn\'t find file ' + scraperPath);
+    return false;
+  }
+
+  return isValid;
+}
+
+/**
+ * Check if path is directory
+ */
+function isDirectory(path) {
+  try {
+    const stat = fs.statSync(path);
+    return stat.isDirectory();  
+  } catch(ex) {
+    return false;
+  }
+}
+
+/**
+ * Check if path is file
+ */
+function isFile(path) {
+  try {
+    const stat = fs.statSync(path);
+    return stat.isFile();  
+  } catch(ex) {
+    return false;
+  }
+}

@@ -26,12 +26,17 @@
         "method": "GET"
       },
       "selectors": {
+        "modality": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(1) > td:nth-child(2)",
+        "description": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(1) > td:nth-child(2)",
         "number": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(1) > td:nth-child(2)",
         "date": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(5) > td:nth-child(2)",
-        "link": "a.doc-licit"
+        "link": "a.doc-licit",
+        "agency": "#content-int > div:nth-child(1) > div.box-content.no-padding > table.table.table-hover.table-nohead > tbody > tr:nth-child(2) > td:nth-child(2)"
       },
       "patterns": {
-        "number": "\\d{1,}\/\\d{4}"
+        "modality": "^[A-Z]*",
+        "description": "(?:\\s*-\\s*)(.*)(?:\\s*-*)",
+        "number": "\\d{1,}\\/\\d{2,}"
       }
     }
   ]
