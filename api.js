@@ -85,6 +85,8 @@ ScraperAPI.prototype.runScraper = (req, res) => {
             console.log(err);
           }
         });
+
+        console.log(data);
         
         // Save in database
         
