@@ -14,12 +14,10 @@ const scrape = require('./index');
 
 function ScraperAPI() {
   let self = this;
-  
-  self.running = null;
   self.init();
 }
 
-ScraperAPI.prototype.init = (req, res) => {
+ScraperAPI.prototype.init = () => {
   let self = this;
   const db = secrets.db;
 
@@ -32,8 +30,6 @@ ScraperAPI.prototype.init = (req, res) => {
     if(err) console.log(err);
     else console.log('Connected to database!');
   });
-
-  self.running = [];
 }
 
 /**
@@ -61,16 +57,12 @@ ScraperAPI.prototype.runScraper = (req, res) => {
       });
 
       _scraper.on('error', (message) => {
-        //const index = self.running.indexOf(scraper._id);
-        //if(index > -1) {
-        //  self.running.splice(index, 1);
-        //}
-        // Emit error to client via socket
+        
       });
 
       // Add scraper to running
       _scraper.on('start', (message) => {
-        //self.running.push(scraper._id);
+        
         updateRunning(scraper, true, (err, raw) => {
           if(err) {
             console.log(err);
@@ -87,10 +79,7 @@ ScraperAPI.prototype.runScraper = (req, res) => {
       // On results, save in database and send data to client
       _scraper.on('finish', (data) => {
         // Remove from running
-        //const index = self.running.indexOf(scraper._id);
-        //if(index > -1) {
-        //  self.running.splice(index, 1);
-        //}
+        
         updateRunning(scraper, false, (err, raw) => {
           if(err) {
             console.log(err);
