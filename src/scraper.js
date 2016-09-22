@@ -96,7 +96,10 @@ var TASK = {
 };
 
 
-var LAST_RESULTS = [];
+var LAST_RESULTS = {
+  ids: [],
+  results: {}
+};
 
 function TNMScraper(options) {
   
