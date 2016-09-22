@@ -9,6 +9,7 @@ const Schema = mongoose.Schema;
 mongoose.Promise = global.Promise;
 
 const Scraper = require('./src/models/scraper');
+const Result  = require('./src/models/result');
 
 const scrape = require('./index');
 
@@ -181,6 +182,27 @@ ScraperAPI.prototype.getScraperByCity = (req, res) => {
   }
 }
 
+/**
+ * GET /scrapers/pending/:id
+ */
+ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
+  let id = req.params.id;
+  if(id) {
+    Result.find({ _id: new Schema.ObjectId(id), approved: false }, { __v: false }, (err, pending) => {
+      if(err) {
+        return res.status(500)
+                  .send(makeError(err.message,
+                                  err.code));
+      }
+
+      return res.send(makeResponse(true, pending));
+    });
+  }
+  else {
+    return res.status(500).
+               send(makeError('id param is not valid'));
+  }
+}
 
 /**
  * POST /scrapers
