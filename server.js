@@ -59,6 +59,14 @@ app.get('/scrapers/:id', scraperApi.getScraperById);
 //
 app.get('/scrapers/city/:id', scraperApi.getScraperByCity);
 
+//
+// *DOC*
+// method - GET
+// desc - Get pending results from a scraper
+// endpint - /scrapers/pending/:id
+//
+app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
+
 // Inserts a scraper
 app.post('/scrapers', scraperApi.insertScraper);
 
