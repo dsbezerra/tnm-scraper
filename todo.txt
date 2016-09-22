@@ -15,5 +15,3 @@ Version v1.0.0
 [x] Support ASPNET forms.
 [x] Support pagination (funcionando em são paulo)
 [x] Redo GetSession routine
-[ ] 
- 

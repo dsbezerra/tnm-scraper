@@ -10,6 +10,7 @@ var async               = require('async'),
     crypto              = require('crypto'),
     fs                  = require('fs'),
     iconv               = require('iconv-lite'),
+    _                   = require('lodash'),
     request             = require('request'),
     url                 = require('url'),
     util                = require('util'),
@@ -1358,10 +1359,19 @@ function extractLink(item, selector) {
 function getTrimText(item, selector) {
   var text = '';
 
-  if(selector)
+  if(_.isArray(selector)) {
+    for(var i = 0; i < selector.length; ++i) {
+      text = item.find(selector[i]).text().trim();
+      if(text)
+        break;
+    }
+  }
+  else if(selector) {
     text = item.find(selector).text().trim();
-  else
+  }
+  else {
     text = item.text().trim();
+  }
 
   return text;
 }

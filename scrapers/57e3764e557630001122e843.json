@@ -44,7 +44,7 @@
         "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
         "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
         "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
-        "openDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao",
+        "openDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblAbertura",
         "publishDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblDataPublicacao",
         "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
         "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
