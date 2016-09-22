@@ -187,14 +187,15 @@ ScraperAPI.prototype.getScraperByCity = (req, res) => {
 ScraperAPI.prototype.insertScraper = (req, res) => {
   const scraper = req.body;
   if(scraper.name && scraper.city) {
-    Scraper.insert({ name: scraper.name, city: scraper.city }, (err, scraper) => {
+    Scraper s = new Scraper({name: scraper.name, city: scraper.city});
+    s.save((err, saved) => {
       if(err) {
-        return res.status(500)
-                  .send(makeError(err.message,
+        return res.status(500).
+                   send(makeError(err.message,
                                   err.code));
       }
-      
-      return res.send(makeResponse(true, scraper));
+
+      return res.send(makeResponse(true, saved));
     });
   }
   else {
