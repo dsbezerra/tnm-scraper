@@ -212,7 +212,7 @@ ScraperAPI.prototype.getScraperByCity = (req, res) => {
 ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
   let id = req.params.id;
   if(id) {
-    Result.find({ _id: new Schema.ObjectId(id), approved: false }, { __v: false }, (err, pending) => {
+    Result.find({ _id: id, approved: false }, { __v: false }, (err, pending) => {
       if(err) {
         return res.status(500)
                   .send(makeError(err.message,
