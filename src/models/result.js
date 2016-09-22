@@ -27,6 +27,6 @@ const result = new Schema({
     fileName: String,
     fileFormat: String
   }
-});
+}, { autoIndexID: true });
 
 module.exports = mongoose.model('Result', result);
