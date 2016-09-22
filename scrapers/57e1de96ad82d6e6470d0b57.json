@@ -17,7 +17,7 @@
         "postURI": "Default.aspx",
         "method": "POST",
         "form": {
-          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl03$lbtPainelLicitacoes"
+          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl07$lbtPainelLicitacoes"
         }
       },
       "list": true,
@@ -25,13 +25,16 @@
       "selectors": {
         "container": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent",
         "listItem": "tr",
-        "link": "tr",
+        "link": "a",
+        "number": "td:nth-child(1)",
+        "modality": "td:nth-child(3)",
+        "date": "td:nth-child(4)",
+        "description": "td:nth-child(5)",
         "nextPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrNext_lbtText",
-        "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText",
-        "number": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent_ctl02_lbtSelecionar",
-        "modality": "tr > td:nth-child(3)",
-        "date": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent_ctl02_lblDataAbertura",
-        "description": "tr > td:nth-child(5)"
+        "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText"
+      },
+      "patterns": {
+        "date": "\\d{2}\/\\d{2}\\/\\d{4}"
       }
     },
     {

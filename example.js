@@ -1,6 +1,7 @@
 var fs   = require('fs');
 var path = require('path');
 var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
 var scrape = require('./index');
 
@@ -25,42 +26,14 @@ if(FROM_DB) {
       return;
     }
 
-    // Check if a scraper exists
-    Scraper.findOne({
-      name: 'São Paulo - Pregão Presencial'
-    }).lean().exec((err, scraper) => {
-      if(err) {
-        console.log(err);
-        return;
-      }
+    findScraperIncludingLastResults('57e1d3d7ad82d6e6470d0b56', (err, scraper) => {
+      if(err) return;
+      
+      var scraperPath = path.join('scrapers', scraper._id + '.json');
+      var dirPath = path.resolve('scrapers');
 
-      if(scraper) {
-        const scraperPath = path.join('scrapers', scraper._id + '/config.json');
-        const dirPath = path.join('scrapers', String(scraper._id));
-        
-        if(checkValidPaths(dirPath, scraperPath)) {
-          runScraper(scraperPath, scraper, handleResult);
-        }
-      }
-      else {
-
-        // Create scraper
-        Scraper.create({
-          name: 'São Paulo - Pregão Presencial',
-          city: 'São Paulo'
-        }, (err, scraper) => {
-          if(err) {
-            console.log(err);
-            return;
-          }
-
-          const scraperPath = path.join('scrapers', scraper._id + '/config.json');
-          const dirPath = path.join('scrapers', String(scraper._id));
-          
-          if(checkValidPaths(dirPath, scraperPath)) {
-            runScraper(scraperPath, scraper, handleResult);
-          }
-        });
+      if(checkValidPaths(dirPath, scraperPath)) {
+        runScraper(scraperPath, scraper, handleResult);
       }
     });
   });
@@ -85,32 +58,15 @@ else {
 function runScraper(path, scraper, callback) {
   if(!path) return;
 
-  let options = {};
-  resolveNewestResult(scraper, (err, result) => {
-    if(result) {
-      scraper.newestResult = result;
-      options['scraper']= scraper;
-    }
-
-    var scraperTask = scrape(path, options, function(err, result) {
-      if(err) return callback(null);
-      if(result) return callback(null, scraper, result);
-    });
+  let options = {
+    scraper: scraper,
+  };
+  
+  var scraperTask = scrape(path, options, function(err, result) {
+    if(err) return callback(null);
+    if(result) return callback(null, scraper, result);
   });
 }
-
-function resolveNewestResult(scraper, callback) {
-  Result.findOne({
-    _id: scraper.newestResult
-  }).lean().exec((err, result) => {
-    if(err) {
-      return callback(null);
-    }
-
-    return callback(null, result);
-  });
-}
-
 
 /**
  * Handles the result from scraper
@@ -121,47 +77,58 @@ function handleResult(err, scraper, results) {
     return;
   }
 
-  let newest = {
-    date:  0,
-    index: 0,
-  }
-
-  for(let i = 0; i < results.length; ++i) {
-    const parts = results[i].date.split('/');
-    const date = new Date(`'${parts[2]}/${parts[1]}/${parts[0]}'`);
-    const milliseconds = date.getTime();
-
-    if(milliseconds > newest.date) {
-      newest.date  = milliseconds;
-      newest.index = i;
-    }
-
-    // Changing date from string to Date and adding scraperId
-    results[i].date = date;
-    results[i].scraper = scraper._id;
-    results[i].approved = false;
-  }
-  
-  // Insert results
-  Result.collection.insert(results, (err, insertedResults) => {
-    if(err) {
-      return;
+  if(results.length > 0) {
+    for(var i = 0; i < results.length; ++i) {
+      results[i].scraper = scraper._id;
+      results[i].approved = false;
+      results[i].ignored = false;
     }
     
-    if(insertedResults.length != 0) {
-      // Update newest result
-      const newestId = insertedResults.ops[newest.index]._id;
-      Scraper.update({_id: scraper._id }, { newestResult: newestId}, (err, raw) => {
+    Result.collection.insert(results, (err, result) => {
+      if(err) {
+        console.log(err);
+      }
+      
+      console.log(result);
+    });
+  }
+  else {
+    console.log("Nenhum item novo!");
+    process.exit();
+  }
+  
+}
+
+function findScraperIncludingLastResults(id, callback) {
+  Scraper.find({ _id: id }).lean().limit(1).exec((err, scrapers) => {
+    if(err) {
+      return callback(err);
+    }
+
+    var scraper = scrapers[0];
+    if(scraper) {
+      Result.find({ scraper: scraper._id }).lean().exec((err, results) => {
         if(err) {
-          console.log(err);
+          return callback(err);
         }
+
+        var r = {
+          ids: [],
+          results: {},
+        };
+
+        for(var i = 0; i < results.length; ++i) {
+          var item = results[i];
+          r.ids.push(item.id);
+          r.results[item.id] = item;
+        }
+        
+        scraper.lastResults = r;
+        return callback(null, scraper);
       });
     }
   });
-
-  console.log('Newest ' + new Date(newest.date));
 }
-
 
 /**
  * Check if paths are valid

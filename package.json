@@ -2,19 +2,24 @@
   "name": "tnm-scraper",
   "version": "1.0.0",
   "description": "Scraper API",
-  "main": "tnm.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
   },
   "author": "Diego Bezerra",
   "license": "ISC",
   "dependencies": {
     "async": "^2.0.1",
+    "body-parser": "^1.15.2",
     "cheerio": "^0.20.0",
     "colors": "^1.1.2",
+    "compression": "^1.6.2",
     "express": "^4.14.0",
     "iconv-lite": "^0.4.13",
-    "mongoose": "^4.6.0",
+    "lodash": "^4.15.0",
+    "mongoose": "^4.6.1",
+    "morgan": "^1.7.0",
     "request": "^2.74.0",
     "url": "^0.11.0"
   },

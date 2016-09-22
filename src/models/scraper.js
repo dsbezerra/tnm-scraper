@@ -13,12 +13,12 @@ const MODALITY = {
   TOMADA_PRECO:       6, 
 };
 
-const scraper = new Schema({
+const Scraper = new Schema({
   name: String,
   city: String,
-  lastRunDate: { type: Date, default: Date.now },
-  newestResult: { type: Schema.ObjectId, ref: 'Result' },
-  
+  running: { type: Boolean, default: false },
+  hidden: { type: Boolean, default: false },
+  lastRunDate: { type: Date },
 });
 
-module.exports = mongoose.model('Scraper', scraper);
+module.exports = mongoose.model('Scraper', Scraper);
