@@ -72,7 +72,7 @@ ScraperAPI.prototype.runScraper = (req, res) => {
               results[i].scraper = scraper._id;            
             }
 
-            Result.insert(results, (err, insertResult) => {
+            Result.collection.insert(results, (err, insertResult) => {
               if(err) {
                 console.log(err);
               }
@@ -232,6 +232,7 @@ ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
  * GET /scrapers/checkProgres/:id
  */
 ScraperAPI.prototype.checkProgress = (req, res) => {
+  let self = this;
   const id = req.params.id;
   if(id) {
     return res.send(makeResponse(true, self.progress[id]));

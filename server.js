@@ -71,7 +71,7 @@ app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 // *DOC*
 // method - GET
 // desc - Check progress of running scraper
-// endpint - /scrapers/checkProgress
+// endpint - /scrapers/checkProgress/:id
 //
 app.get('/scrapers/checkProgress/:id', scraperApi.checkProgress);
 
