@@ -56,8 +56,11 @@ ScraperAPI.prototype.runScraper = (req, res) => {
         console.log(err);
       }
       else {
+        const options = {
+          scraper: scraper,
+        };
         const configPath = path.join('scrapers', scraper._id + '.json');
-        const _scraper = scrape(configPath, (err, results) => {
+        const _scraper = scrape(configPath, options, (err, results) => {
           if(err) {
             // TODO(diego): Emit error event
             console.log(err);
@@ -65,7 +68,7 @@ ScraperAPI.prototype.runScraper = (req, res) => {
 
           // Save in database
           if(results.length > 0) {
-            for(var i = 0; results.length; ++i) {
+            for(var i = 0; i < results.length; ++i) {
               results[i].scraper = scraper._id;            
             }
 
