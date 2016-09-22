@@ -7,7 +7,7 @@ const Scraper = require('./scraper');
 
 const result = new Schema({
   scraper: { type: Schema.ObjectId, ref: 'Scraper' },
-  _id: { type: String, required: true },
+  _hash: Striing,
   modality: Number,
   number: String,
   agency: String,
