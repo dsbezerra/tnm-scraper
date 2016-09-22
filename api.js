@@ -21,9 +21,9 @@ function ScraperAPI() {
 
 ScraperAPI.prototype.init = () => {
   let self = this;
-  const { user, pwd, name, host, port } = secrets.db;
+  const db = secrets.db;
 
-  var uri = `mongodb://${user}:${pwd}@${host}:${port}/${name}`;
+  var uri = `mongodb://${db.user}:${db.pwd}@${db.host}:${db.port}/${db.name}`;
   if(process.env.MONGODB_URI) {
     uri = process.env.MONGODB_URI;
   }
