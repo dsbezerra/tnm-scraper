@@ -1,3 +1,5 @@
+'use strict'
+
 const secrets  = require('./config/secrets');
 const _        = require('lodash');
 const path     = require('path');
