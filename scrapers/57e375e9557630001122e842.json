@@ -1,7 +1,7 @@
 {
-  "name": "sao_paulo",
+  "name": "São Paulo - Pregão Eletrônico",
   "baseURI": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
-  "delay": 1000,
+  "delay": 2000,
   "charset": "iso-8859-1",
   "aspnet": true,
   "randomizeDelay": true,
@@ -50,7 +50,8 @@
         "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
       },
       "patterns": {
-        "openDate": "\\d{2}\/\\d{2}\\/\\d{4}"
+        "openDate": "\\d{2}\/\\d{2}\\/\\d{4}",
+        "publishDate": "\\d{2}\/\\d{2}\\/\\d{4}"
       }
     }
   ]
