@@ -917,7 +917,8 @@ function isFileDownloadLink(string) {
     string.endsWith('.pdf')  || string.endsWith('.PDF')  ||
     string.endsWith('.doc')  || string.endsWith('.DOC')  ||
     string.endsWith('.docx') || string.endsWith('.DOCX') ||
-    string.endsWith('.zip')  || string.endsWith('.ZIP')
+    string.endsWith('.zip')  || string.endsWith('.ZIP')  ||
+    string.endsWith('.rar')  || string.endsWith('.RAR'))
   );
 }
 
