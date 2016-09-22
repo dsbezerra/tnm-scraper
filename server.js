@@ -13,8 +13,8 @@ const scraperApi = new ScraperAPI();
 
 const app = express();
 
-const ip = process.env.IP || 'localhost';
-const port = process.env.PORT || 8080;
+var ip = process.env.IP || '0.0.0.0';
+var port = process.env.PORT || 80;
 
 
 // Middlewares
