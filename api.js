@@ -17,7 +17,7 @@ const scrape = require('./index');
 function ScraperAPI() {
   let self = this;
 
-  self.progress = {};
+  self.progress = null;
   
   self.init();
 }
@@ -35,6 +35,8 @@ ScraperAPI.prototype.init = () => {
     if(err) console.log(err);
     else console.log('Connected to database!');
   });
+
+  self.progress = {};
 }
 
 /**
