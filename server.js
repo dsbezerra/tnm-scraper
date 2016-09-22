@@ -4,18 +4,14 @@ const compression  = require('compression');
 const logger       = require('morgan');
 const mongodb      = require('mongodb');
 
-
-
 const ScraperAPI = require('./api');
-
-
-const scraperApi = new ScraperAPI();
 
 const app = express();
 
 var ip = process.env.IP || '0.0.0.0';
 var port = process.env.PORT || 80;
 
+app.set('port', port);
 
 // Middlewares
 app.use(compression());
@@ -23,6 +19,8 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(logger('dev'));
 
+
+const scraperApi = new ScraperAPI();
 
 app.get('/', (req, res) => {
   res.send(scraperApi.getRunningScrapers());
@@ -77,6 +75,6 @@ app.delete('/scrapers/:id', scraperApi.deleteScraper);
 
 
 
-app.listen(port, ip, () => {
-  console.log('Server started listening on %s:%s', ip, port);
+app.listen(app.get('port'), () => {
+  console.log('Server started listening...');
 });
