@@ -351,4 +351,37 @@ function makeResponse(success, data) {
   return response;
 }
 
+
+// Util functions
+function findScraperIncludingLastResults(id, callback) {
+  Scraper.find({ _id: id }).lean().limit(1).exec((err, scrapers) => {
+    if(err) {
+      return callback(err);
+    }
+
+    var scraper = scrapers[0];
+    if(scraper) {
+      Result.find({ scraper: scraper._id }).lean().exec((err, results) => {
+        if(err) {
+          return callback(err);
+        }
+
+        var r = {
+          ids: [],
+          results: {},
+        };
+
+        for(var i = 0; i < results.length; ++i) {
+          var item = results[i];
+          r.ids.push(item._id);
+          r.results[item._id] = item;
+        }
+        
+        scraper.lastResults = r;
+        return callback(null, scraper);
+      });
+    }
+  });
+}
+
 module.exports = ScraperAPI;
