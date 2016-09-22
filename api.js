@@ -229,10 +229,10 @@ ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
 }
 
 /**
- * GET /scrapers/checkProgres?id=
+ * GET /scrapers/checkProgres/:id
  */
 ScraperAPI.prototype.checkProgress = (req, res) => {
-  const id = req.query.id;
+  const id = req.params.id;
   if(id) {
     return res.send(makeResponse(true, self.progress[id]));
   }

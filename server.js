@@ -73,7 +73,7 @@ app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 // desc - Check progress of running scraper
 // endpint - /scrapers/checkProgress
 //
-app.get('/scrapers/checkProgress', scraperApi.checkProgress);
+app.get('/scrapers/checkProgress/:id', scraperApi.checkProgress);
 
 // Inserts a scraper
 app.post('/scrapers', scraperApi.insertScraper);
