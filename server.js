@@ -22,7 +22,7 @@ app.use(logger('dev'));
 
 const scraperApi = new ScraperAPI();
 
-app.get('/', function(req, res) {
+app.get('/', (req, res) => {
   res.send('Cobol!');
 });
 

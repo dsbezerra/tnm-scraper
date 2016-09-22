@@ -19,7 +19,7 @@ function ScraperAPI() {
   self.init();
 }
 
-ScraperAPI.prototype.init = function(req, res) {
+ScraperAPI.prototype.init = (req, res) => {
   let self = this;
   const db = secrets.db;
 
@@ -28,7 +28,7 @@ ScraperAPI.prototype.init = function(req, res) {
     uri = process.env.MONGODB_URI;
   }
   
-  mongoose.connect(uri, function(err) {
+  mongoose.connect(uri, (err) => {
     if(err) console.log(err);
     else console.log('Connected to database!');
   });
@@ -40,27 +40,27 @@ ScraperAPI.prototype.init = function(req, res) {
  * POST /scrapers/run
  * Run a scraper  
  */
-ScraperAPI.prototype.runScraper = function(req, res) {
+ScraperAPI.prototype.runScraper = (req, res) => {
 
   let self = this;
   
   const id = req.body.id;
   
   if(id && isNaN(id)) {
-    Scraper.findById(id, { __v: false }, function (err, scraper) {
+    Scraper.findById(id, { __v: false }, (err, scraper) => {
       if(err) {
         console.log(err);
       }
 
       const configPath = path.join('scrapers', scraper._id + '.json');
-      const _scraper = scrape(configPath, function (err, result) {
+      const _scraper = scrape(configPath, (err, result) => {
         if(err) {
           // TODO(diego): Emit error event
           console.log(err);
         }
       });
 
-      _scraper.on('error', function(message) {
+      _scraper.on('error', (message) => {
         //const index = self.running.indexOf(scraper._id);
         //if(index > -1) {
         //  self.running.splice(index, 1);
@@ -69,9 +69,9 @@ ScraperAPI.prototype.runScraper = function(req, res) {
       });
 
       // Add scraper to running
-      _scraper.on('start', function(message) {
+      _scraper.on('start', (message) => {
         //self.running.push(scraper._id);
-        updateRunning(scraper, true, function(err, raw) {
+        updateRunning(scraper, true, (err, raw) => {
           if(err) {
             console.log(err);
           }
@@ -80,18 +80,18 @@ ScraperAPI.prototype.runScraper = function(req, res) {
       });
 
       
-      _scraper.on('stats', function(stats) {
+      _scraper.on('stats', (stats) => {
         
       });
 
       // On results, save in database and send data to client
-      _scraper.on('finish', function(data) {
+      _scraper.on('finish', (data) => {
         // Remove from running
         //const index = self.running.indexOf(scraper._id);
         //if(index > -1) {
         //  self.running.splice(index, 1);
         //}
-        updateRunning(scraper, false, function(err, raw) {
+        updateRunning(scraper, false, (err, raw) => {
           if(err) {
             console.log(err);
           }
@@ -115,8 +115,8 @@ ScraperAPI.prototype.runScraper = function(req, res) {
 /**
  * GET /scrapers/running
  */
-ScraperAPI.prototype.getRunningScrapers = function(req, res) {
-  Scraper.find({ running: true }, { __v: false }, function(err, scrapers) {
+ScraperAPI.prototype.getRunningScrapers = (req, res) => {
+  Scraper.find({ running: true }, { __v: false }, (err, scrapers) => {
     if(err) {
       return res.status(500)
                 .send(makeError(err.message,
@@ -130,8 +130,8 @@ ScraperAPI.prototype.getRunningScrapers = function(req, res) {
  * GET /scrapers
  * Returns all scrapers in database
  */
-ScraperAPI.prototype.getScrapers = function(req, res) {
-  Scraper.find({}, { __v: false }, function(err, scrapers) {
+ScraperAPI.prototype.getScrapers = (req, res) => {
+  Scraper.find({}, { __v: false }, (err, scrapers) => {
     if(err) {
       return res.status(500)
                 .send(makeError(err.message,
@@ -146,11 +146,11 @@ ScraperAPI.prototype.getScrapers = function(req, res) {
  * GET /scrapers/:id
  * Returns the scraper that matches id
  */
-ScraperAPI.prototype.getScraperById = function(req, res) {
+ScraperAPI.prototype.getScraperById = (req, res) => {
 
   let id = req.params.id;
   if(id && isNaN(id)) {
-    Scraper.findById(id, { __v: false }, function(err, scraper) {
+    Scraper.findById(id, { __v: false }, (err, scraper) => {
       if(err) {
         return res.status(500)
                   .send(makeError(err.message,
@@ -170,11 +170,11 @@ ScraperAPI.prototype.getScraperById = function(req, res) {
  * GET /scrapers/:city
  * Returns the scraper that matches id
  */
-ScraperAPI.prototype.getScraperByCity = function(req, res) {
+ScraperAPI.prototype.getScraperByCity = (req, res) => {
 
   let city = req.params.id;
   if(city && isNaN(city)) {
-    Scraper.find({ city: city }, { __v: false }, function(err, scrapers) {
+    Scraper.find({ city: city }, { __v: false }, (err, scrapers) => {
       if(err) {
         return res.status(500)
                   .send(makeError(err.message,
@@ -195,10 +195,10 @@ ScraperAPI.prototype.getScraperByCity = function(req, res) {
  * POST /scrapers
  * Inserts a scraper in database
  */
-ScraperAPI.prototype.insertScraper = function(req, res) {
+ScraperAPI.prototype.insertScraper = (req, res) => {
   const scraper = req.body;
   if(scraper.name && scraper.city) {
-    Scraper.insert({ name: scraper.name, city: scraper.city }, function(err, scraper) {
+    Scraper.insert({ name: scraper.name, city: scraper.city }, (err, scraper) => {
       if(err) {
         return res.status(500)
                   .send(makeError(err.message,
@@ -218,11 +218,11 @@ ScraperAPI.prototype.insertScraper = function(req, res) {
  * UPDATE /scrapers/:id
  * Update a scraper in database
  */
-ScraperAPI.prototype.updateScraper = function(req, res) {
+ScraperAPI.prototype.updateScraper = (req, res) => {
   const id = req.params.id;
   const scraper = req.body;
   if(id && isNaN(id) && scraper) {
-    Scraper.update({ _id: id }, scraper, function(err, raw) {
+    Scraper.update({ _id: id }, scraper, (err, raw) => {
       if(err) {
         return res.status(500)
                   .send(makeError(err.message,
@@ -242,7 +242,7 @@ ScraperAPI.prototype.updateScraper = function(req, res) {
  * DELETE /scrapers/:id
  * Delete a scraper in database
  */
-ScraperAPI.prototype.deleteScraper = function(req, res) {
+ScraperAPI.prototype.deleteScraper = (req, res) => {
   const id = req.params.id;
   if(id && isNaN(id)) {
     Scraper.remove({ _id: id }, (err, raw) => {
@@ -265,7 +265,7 @@ ScraperAPI.prototype.deleteScraper = function(req, res) {
  * Updates running property
  */
 function updateRunning(scraper, running, callback) {
-  Scraper.update({ _id: scraper._id }, Object.assign(scraper, { running }), function(err, raw) {
+  Scraper.update({ _id: scraper._id }, Object.assign(scraper, { running }), (err, raw) => {
     if(err) {
       return callback(err);
     }
