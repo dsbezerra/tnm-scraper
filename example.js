@@ -26,7 +26,7 @@ if(FROM_DB) {
       return;
     }
 
-    findScraperIncludingLastResults('57e1d3d7ad82d6e6470d0b56', (err, scraper) => {
+    findScraperIncludingLastResults('57db1f6d8bc35e17001fc0b5', (err, scraper) => {
       if(err) return;
       
       var scraperPath = path.join('scrapers', scraper._id + '.json');
@@ -119,8 +119,8 @@ function findScraperIncludingLastResults(id, callback) {
 
         for(var i = 0; i < results.length; ++i) {
           var item = results[i];
-          r.ids.push(item.id);
-          r.results[item.id] = item;
+          r.ids.push(item._id);
+          r.results[item._id] = item;
         }
         
         scraper.lastResults = r;

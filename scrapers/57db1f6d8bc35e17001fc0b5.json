@@ -1,0 +1,58 @@
+{
+  "name": "São Paulo - Pregão Presencial",
+  "baseURI": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
+  "delay": 2000,
+  "charset": "iso-8859-1",
+  "aspnet": true,
+  "randomizeDelay": true,
+  "routine": [
+    {
+      "id": "GET_SESSION",
+      "name": "GetSession"
+    },
+    {
+      "id": "GET_LINKS",
+      "name": "GetLinks",
+      "request": {
+        "postURI": "Default.aspx",
+        "method": "POST",
+        "form": {
+          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl03$lbtPainelLicitacoes"
+        }
+      },
+      "list": true,
+      "pagination": true,
+      "selectors": {
+        "container": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent",
+        "listItem": "tr",
+        "link": "a",
+        "number": "td:nth-child(1)",
+        "modality": "td:nth-child(3)",
+        "openDate": "td:nth-child(4)",
+        "description": "td:nth-child(5)",
+        "nextPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrNext_lbtText",
+        "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText"
+      },
+      "patterns": {
+        "openDate": "\\d{2}\/\\d{2}\\/\\d{4}"
+      }
+    },
+    {
+      "id": "GET_DETAILS",
+      "name": "GetDetails",
+      "selectors": {
+        "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
+        "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
+        "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
+        "openDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao",
+        "publishDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblDataPublicacao",
+        "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
+        "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
+      },
+      "patterns": {
+        "openDate": "\\d{2}\/\\d{2}\\/\\d{4}",
+        "publishDate": "\\d{2}\/\\d{2}\\/\\d{4}"
+      }
+    }
+  ]
+}

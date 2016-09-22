@@ -473,7 +473,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
       var notice = extractNotice(page['$'], routine.selectors, routine.patterns, page.uri);
       
       if(notice) {
-        notice.id = content.id;
+        notice._id = content._id;
         notice.website = page.uri;
         //self.emitAsync('notice', notice);
         next(null, notice);
@@ -1176,16 +1176,16 @@ function extractContent(options, routine, $) {
       for(var i = 0; i < items.length; ++i) {
         var item = $(items[i]);
         var content = extractMinimumContent(item, selectors, patterns);
-        content.id = getHashOfContent(content);
-        if(content.id) {
+        content._id = getHashOfContent(content);
+        if(content._id) {
 
-          if(!LAST_RESULTS.results[content.id]) {
+          if(!LAST_RESULTS.results[content._id]) {
             console.log("Found new item at index " + i);
-            console.log(`[${content.id}][${content.number}] New!!!`);
+            console.log(`[${content._id}][${content.number}] New!!!`);
             contents.push(content);
           }
           else {
-            console.log(`[${content.id}][${content.number}] Already in database!!!`);
+            console.log(`[${content._id}][${content.number}] Already in database!!!`);
           }
 
           

@@ -7,7 +7,7 @@ const Scraper = require('./scraper');
 
 const result = new Schema({
   scraper: { type: Schema.ObjectId, ref: 'Scraper' },
-  id: { type: String, unique: true },
+  _id: { type: String, required: true },
   modality: Number,
   number: String,
   agency: String,
@@ -27,6 +27,6 @@ const result = new Schema({
     fileName: String,
     fileFormat: String
   }
-}, { _id: false });
+});
 
 module.exports = mongoose.model('Result', result);

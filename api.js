@@ -1,6 +1,7 @@
 'use strict'
 
 const secrets  = require('./config/secrets');
+const uuid     = require('node-uuid');
 const _        = require('lodash');
 const path     = require('path');
 const mongoose = require('mongoose');
@@ -15,6 +16,9 @@ const scrape = require('./index');
 
 function ScraperAPI() {
   let self = this;
+
+  self.progress = {};
+  
   self.init();
 }
 
@@ -42,60 +46,75 @@ ScraperAPI.prototype.runScraper = (req, res) => {
   let self = this;
   
   const id = req.body.id;
+  const taskId = uuid.v1();
   
   if(id && isNaN(id)) {
-    Scraper.findById(id, { __v: false }, (err, scraper) => {
+    findScraperIncludingLastResults(id, (err, scraper) => {
       if(err) {
         console.log(err);
       }
-
-      const configPath = path.join('scrapers', scraper._id + '.json');
-      const _scraper = scrape(configPath, (err, result) => {
-        if(err) {
-          // TODO(diego): Emit error event
-          console.log(err);
-        }
-      });
-
-      _scraper.on('error', (message) => {
-        
-      });
-
-      // Add scraper to running
-      _scraper.on('start', (message) => {
-        
-        updateRunning(scraper, true, (err, raw) => {
+      else {
+        const configPath = path.join('scrapers', scraper._id + '.json');
+        const _scraper = scrape(configPath, (err, results) => {
           if(err) {
+            // TODO(diego): Emit error event
             console.log(err);
           }
-          return res.send({ success: true });
-        });
-      });
 
-      
-      _scraper.on('stats', (stats) => {
-        
-      });
+          // Save in database
+          if(results.length > 0) {
+            for(var i = 0; results.length; ++i) {
+              results[i].scraper = scraper._id;            
+            }
 
-      // On results, save in database and send data to client
-      _scraper.on('finish', (data) => {
-        // Remove from running
-        
-        updateRunning(scraper, false, (err, raw) => {
-          if(err) {
-            console.log(err);
+            Result.insert(results, (err, insertResult) => {
+              if(err) {
+                console.log(err);
+              }
+            });
           }
         });
 
-        console.log(data);
-        
-        // Save in database
-        
-        // Send saved in db to client
+        _scraper.on('error', (message) => {
+          
+        });
+
+        // Add scraper to running
+        _scraper.on('start', (message) => {
+          
+          updateRunning(scraper, true, (err, raw) => {
+            if(err) {
+              console.log(err);
+            }
+            return res.send({ success: true, taskId: taskId });
+          });
+        });
 
         
-      });
-      
+        _scraper.on('stats', (stats) => {
+          self.progress[taskId] = stats;
+        });
+
+        // On results, save in database and send data to client
+        _scraper.on('finish', (data) => {
+          // Remove from running
+          
+          updateRunning(scraper, false, (err, raw) => {
+            if(err) {
+              console.log(err);
+            }
+          });
+
+          console.log(data);
+          delete self.progress[taskId];
+          
+          // Save in database
+          
+          // Send saved in db to client
+
+          
+        });
+      }
     });
   }
   else {
@@ -201,6 +220,20 @@ ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
   else {
     return res.status(500).
                send(makeError('id param is not valid'));
+  }
+}
+
+/**
+ * GET /scrapers/checkProgres?id=
+ */
+ScraperAPI.prototype.checkProgress = (req, res) => {
+  const id = req.query.id;
+  if(id) {
+    return res.send(makeResponse(true, self.progress[id]));
+  }
+  else {
+    return res.status(500)
+              .send(makeError('id param is not valid!'));
   }
 }
 
