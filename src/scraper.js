@@ -1421,7 +1421,7 @@ function convertToDate(delimiter, string) {
         month = Number(parts[1]),
         day   = Number(parts[0]);
 
-    return new Date(Date.UTC(year, month - 1, day, 12));    
+    return new Date(Date.UTC(year, month, day, 12));    
   }
 
   return null;
