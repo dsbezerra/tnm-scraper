@@ -278,6 +278,7 @@ TNMScraper.prototype.start = function() {
   var stats = self.stats;
  
   self.emitAsync('start', 'Scraper started!');
+  self.emitAsync('stats', stats);
   
   // Define queue
   self.routineQueue = async.queue(function(routine, callback) {
@@ -418,6 +419,9 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
         }
         
         var extracted = extractContent(stats, self.options, routine, page['$']);
+
+        self.emitAsync('stats', stats);
+        
         self.resolveLinks(extracted, page, requestParams.baseURI, function(err, contents) {
           if(err) {
             return self.completeCallback(err, null);
@@ -487,9 +491,6 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
         return self.completeCallback(null, contents);
       }
     }
-      
-    // Update total biddings
-    stats.totalBiddings += contents.length;
     
     detailsQueue.push(contents, function(err, resultNotice) {
       if(err) {
@@ -696,6 +697,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
         }
         
         var extracted = extractContent(stats, options, routine, $);
+        self.emitAsync('stats', stats);
         self.resolveLinks(extracted, $, requestParams.uri, function(err, result) {
           if(err) {
             return callback(err, null);
@@ -1175,9 +1177,6 @@ function extractContent(stats, options, routine, $) {
     if(selectors.listItem) {
 
       var items = container.find(selectors.listItem);
-
-      //var saved = { first: 0, second: 0 };
-      //var firstValidIndex = -1;
       
       for(var i = 0; i < items.length; ++i) {
         var item = $(items[i]);
@@ -1195,67 +1194,8 @@ function extractContent(stats, options, routine, $) {
             stats.totalBiddings++;
             console.log(`[${content._hash}][${content.number}] Already in database!!!`);
           }
-
-          
-          // Check here if is new content
-          //contents.push(content);
-          
-          //if(firstValidIndex < 0)
-          //  firstValidIndex = i; 
-
-          //if(LAST_RESULTS.length === 2) {
-          //  if(content.id === LAST_RESULTS[0].id)
-          //    saved.first = i;
-          //  if(content.id === LAST_RESULTS[1].id)
-          //    saved.second = i;
-          //}
-          //else if (LAST_RESULTS.legnth === 1) {
-          //  if(content.id === LAST_RESULTS[0].id)
-          //    saved.first = i;
-          //}
-
-          
-          
         }
       }
-
-      /*var needToCheckForNew = LAST_RESULTS.length > 0;
-      
-      if(needToCheckForNew) {
-        var diff = Math.abs(saved.second - saved.first);
-        switch(diff) {
-          case 0:
-            {
-              console.log('No new items found!');
-              contents = [];
-            } break;
-
-          case 1:
-            {
-              if(saved.first === firstValidIndex) {
-                // No items at top, new items must be after these two last results
-                console.log('No new items found!');
-                contents = [];
-              }
-              else {
-                console.log('New items at top!');
-                // Splice array here
-              }
-            } break;
-            
-          default:
-            {
-              if(saved.first === firstValidIndex) {
-                console.log('New items between');
-                // Splice array here
-              }
-              else {
-                console.log('New items between and at top!');
-                // Splice array here
-              }
-            } break;
-        }
-      } */
     }
     else {
       // TODO(diego): Diagnostic
