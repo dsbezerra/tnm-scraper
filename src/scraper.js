@@ -1421,7 +1421,7 @@ function convertToDate(delimiter, string) {
         month = parts[1],
         day   = parts[0];
 
-    return new Date(`'${year}-${month}-${day}'`);    
+    return new Date(`'${year}/${month}/${day}'`);    
   }
 
   return null;
