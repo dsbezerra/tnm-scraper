@@ -50,7 +50,7 @@ ScraperAPI.prototype.runScraper = (req, res) => {
   const id = req.body.id;
   const taskId = uuid.v1();
 
-  console.log(id);
+  console.log(req.body);
   
   if(id && isNaN(id)) {
     findScraperIncludingLastResults(id, (err, scraper) => {
