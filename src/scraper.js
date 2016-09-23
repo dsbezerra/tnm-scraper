@@ -1417,11 +1417,11 @@ function convertToDate(delimiter, string) {
   var parts = string.split(delimiter);
   if(parts.length === 3) {
     // TODO(diego): Do more checks here...
-    var year  = parts[2],
-        month = parts[1],
-        day   = parts[0];
+    var year  = Number(parts[2]),
+        month = Number(parts[1]),
+        day   = Number(parts[0]);
 
-    return new Date(`'${year}/${month}/${day}'`);    
+    return new Date(Date.UTC(year, month - 1, day, 12));    
   }
 
   return null;
