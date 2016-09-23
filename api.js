@@ -70,8 +70,8 @@ ScraperAPI.prototype.runScraper = (req, res) => {
           if(results.length > 0) {
             for(var i = 0; i < results.length; ++i) {
               results[i].scraper = scraper._id;            
-              var s = new Scraper(results[i]);
-              s.save();
+              var r = new Result(results[i]);
+              r.save();
             }
           }
         });
