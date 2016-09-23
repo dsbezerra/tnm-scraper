@@ -144,6 +144,7 @@ function TNMScraper(options) {
     // Biddings Stats
     totalBiddings: 0,
     currentBidding: 0,
+    newBiddings: 0,
     
     // Routines Stats
     totalRoutines: 0,
@@ -177,12 +178,7 @@ TNMScraper.prototype.init = function(options) {
   
   Log.i(TAG, 'Initializing scraper...');
   
-  var self = this;
-  var stats = self.stats;
-
-  stats.message = 'Inicializando scraper...';
-  self.emitAsync('stats', stats);
-  
+  var self = this;  
   var options = self.options;
   
   // Check for ASPForm Handler
@@ -237,8 +233,6 @@ TNMScraper.prototype.init = function(options) {
 
   if(options.routine) {
     self.routine = options.routine;
-    stats.totalRoutines = options.routine.length;
-
     // Initialize regex strings to RegExp object
     for(var routineIndex = 0; routineIndex < options.routine.length; ++routineIndex) {
       var patterns = self.routine[routineIndex].patterns;
@@ -273,40 +267,33 @@ TNMScraper.prototype.init = function(options) {
  * Start the scraper routines
  */
 TNMScraper.prototype.start = function() {
-  
-  var self = this;
-  var stats = self.stats;
   var _TAG = `${TAG}(RoutineQueue)`;
 
+  var self = this;
+ 
   self.emitAsync('start', 'Scraper started!');
-  stats.message = 'Iniciando rotina...';
-  self.stats.isRunning = true;
-  self.emitAsync('stats', stats);
   
   // Define queue
   self.routineQueue = async.queue(function(routine, callback) {
     var id = routine.id;
     Log.i(_TAG, 'Starting routine: ' + routine.name);
-    self.emitAsync('routine', id);
     switch(id) {
       case TASK.GET_SESSION:
       {
-        stats.message = 'Adquirindo sessão...';
+        //stats.message = 'Adquirindo sessão...';
         self.getSession(callback);
       } break; 
       case TASK.GET_LINKS:
       {
-        stats.message = 'Extraindo links...';
+        //stats.message = 'Extraindo links...';
         self.scrapeLinks(callback);
       } break;
       case TASK.GET_DETAILS:
       {
-        stats.message = 'Extraindo detalhes das licitações...';
+        //stats.message = 'Extraindo detalhes das licitações...';
         self.scrapeDetails(callback);
       } break;
     }
-
-    self.emitAsync('stats', stats);
   });
 
   // Loop through all routines and add to queue
@@ -320,7 +307,6 @@ TNMScraper.prototype.start = function() {
       }
       
       var routineId = routine[stats.currentRoutine].id;
-
       
       if(result) {
         if(result.length === 0) {
@@ -330,10 +316,9 @@ TNMScraper.prototype.start = function() {
         
         self.results[routineId] = result;
       }
+
       
       Log.i(_TAG, 'Finished routine: ' + routine[stats.currentRoutine++].name, result);
-
-      self.emitAsync('stats', stats);
     });
   }
 
@@ -345,9 +330,7 @@ TNMScraper.prototype.start = function() {
       }
 
       var notices = self.results[TASK.GET_DETAILS];
-
-      self.stats.isRunning = false;
-      self.emitAsync('stats', self.stats);
+      
       self.emitAsync('finish', notices);
       return self.completeCallback(null, notices);
     }
@@ -426,7 +409,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
           return self.completeCallback(err, null);
         }
         
-        var extracted = extractContent(self.options, routine, page['$']);
+        var extracted = extractContent(stats, self.options, routine, page['$']);
         self.resolveLinks(extracted, page, requestParams.baseURI, function(err, contents) {
           if(err) {
             return self.completeCallback(err, null);
@@ -498,7 +481,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
     }
       
     // Update total biddings
-    stats.totalBiddings = contents.length;
+    stats.totalBiddings += contents.length;
     
     detailsQueue.push(contents, function(err, resultNotice) {
       if(err) {
@@ -510,7 +493,6 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
       }
       
       self.results[TASK.GET_DETAILS].push(resultNotice);
-
 
       // Update current scraping detail
       stats.currentBidding++;
@@ -705,7 +687,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
           requestParams.form = self.aspNetForm;
         }
         
-        var extracted = extractContent(options, routine, $);
+        var extracted = extractContent(stats, options, routine, $);
         self.resolveLinks(extracted, $, requestParams.uri, function(err, result) {
           if(err) {
             return callback(err, null);
@@ -836,6 +818,12 @@ TNMScraper.prototype.performRequest = function(params, callback) {
     });
 
   }, delay);
+}
+
+TNMScraper.prototype.updateStat = function(newStat) {
+  var self = this;
+  self.stats = Object.assign(self.stats, newStat);
+  self.emitAsync('stats', self.stats);
 }
 
 /**
@@ -1157,7 +1145,7 @@ function loadBody(charset, body) {
 /**
  * Change this to extract content
  */
-function extractContent(options, routine, $) {
+function extractContent(stats, options, routine, $) {
   var container, selectors, patterns, contents = [];
   
   selectors = routine.selectors;
@@ -1193,8 +1181,10 @@ function extractContent(options, routine, $) {
             console.log("Found new item at index " + i);
             console.log(`[${content._hash}][${content.number}] New!!!`);
             contents.push(content);
+            stats.newBiddings++;
           }
           else {
+            stats.totalBiddings++;
             console.log(`[${content._hash}][${content.number}] Already in database!!!`);
           }
 
