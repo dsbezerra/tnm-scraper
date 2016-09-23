@@ -183,6 +183,7 @@ TNMScraper.prototype.init = function(options) {
 
   var stats = self.stats;
 
+  stats.isRunning = true;
   stats.message = 'Iniciando scraper...';
   
   // Check for ASPForm Handler
@@ -253,6 +254,7 @@ TNMScraper.prototype.init = function(options) {
   else {
     var err = new Error('Routine must exist in Scraper configuration.');
     Log.e(TAG, err.message);
+    stats.isRunning = false;
     return self.completeCallback(err);
   }
 
@@ -320,6 +322,7 @@ TNMScraper.prototype.start = function() {
       if(result) {
         if(result.length === 0) {
           self.routineQueue.kill();
+          stats.isRunning = false;
           return self.completeCallback(null, result);
         }
         
@@ -335,11 +338,12 @@ TNMScraper.prototype.start = function() {
   self.routineQueue.drain = function(err) {
     if(self.completeCallback) {
       if(err) {
+        stats.isRunning = false;
         return self.completeCallback(err, null);
       }
 
       var notices = self.results[TASK.GET_DETAILS];
-      
+      stats.isRunning = false;
       self.emitAsync('finish', notices);
       return self.completeCallback(null, notices);
     }
@@ -366,6 +370,7 @@ TNMScraper.prototype.getSession = function(nextTask) {
 
     self.performRequest(requestParams, function(err, page) {
       if(err) {
+        self.stats.isRunning = false;
         return self.completeCallback(err, null);
       }
 
@@ -395,6 +400,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
     if(routine.pagination) {
       self.handlePagination(function(err, contents) {
         if(err) {
+          stats.isRunning = false;
           return self.completeCallback(err, null);
         }
   
@@ -410,11 +416,13 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
       else {
         Log.e(_TAG, 'requestParams must be a valid object');
         var err = new Error('requestParams must be a valid object');
+        stats.isRunning = false;
         return self.completeCallback(err, null);
       }
       
       self.performRequest(requestParams, function(err, page) {
         if(err) {
+          stats.isRunning = false;
           return self.completeCallback(err, null);
         }
         
@@ -424,6 +432,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
         
         self.resolveLinks(extracted, page, requestParams.baseURI, function(err, contents) {
           if(err) {
+            stats.isRunning = false;
             return self.completeCallback(err, null);
           }
           nextTask(null, contents);
@@ -434,6 +443,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
   }
   else {
     var err = new Error('Invalid routine!');
+    self.stats.isRunning = false;
     return self.completeCallback(err, null);
   }
   
@@ -488,6 +498,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
       self.stats.message = 'Nenhuma licitação nova encontrada!';
 
       if(self.completeCallback) {
+        stats.isRunning = false;
         return self.completeCallback(null, contents);
       }
     }
