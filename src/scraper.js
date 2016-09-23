@@ -143,6 +143,7 @@ function TNMScraper(options) {
     
     // Biddings Stats
     totalBiddings: 0,
+    totalExtracted: 0,
     currentBidding: 0,
     newBiddings: 0,
     
@@ -516,16 +517,17 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
 
       // Update current scraping detail
       stats.currentBidding++;
-
+      stats.totalExtracted = stats.currentBidding;
+      
       self.emitAsync('stats', stats);
     });
   }
 
   // Details Queue finished.
   detailsQueue.drain = function() {
-    // Persist notices
-    // Save last time
-    callback(null, self.results[TASK.GET_DETAILS]);
+    var results = self.results[TASK.GET_DETAILS];
+    stats.totalExtracted = results.length;
+    callback(null, results);
   }
 }
 
