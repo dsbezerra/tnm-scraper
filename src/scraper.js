@@ -270,6 +270,7 @@ TNMScraper.prototype.start = function() {
   var _TAG = `${TAG}(RoutineQueue)`;
 
   var self = this;
+  var stats = self.stats;
  
   self.emitAsync('start', 'Scraper started!');
   
