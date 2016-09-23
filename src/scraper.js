@@ -180,6 +180,10 @@ TNMScraper.prototype.init = function(options) {
   
   var self = this;  
   var options = self.options;
+
+  var stats = self.stats;
+
+  stats.message = 'Iniciando scraper...';
   
   // Check for ASPForm Handler
   if(options.aspnet) {
@@ -233,6 +237,7 @@ TNMScraper.prototype.init = function(options) {
 
   if(options.routine) {
     self.routine = options.routine;
+    stats.totalRoutines = options.routine.length;
     // Initialize regex strings to RegExp object
     for(var routineIndex = 0; routineIndex < options.routine.length; ++routineIndex) {
       var patterns = self.routine[routineIndex].patterns;
@@ -281,20 +286,22 @@ TNMScraper.prototype.start = function() {
     switch(id) {
       case TASK.GET_SESSION:
       {
-        //stats.message = 'Adquirindo sessão...';
+        stats.message = 'Adquirindo sessão...';
         self.getSession(callback);
       } break; 
       case TASK.GET_LINKS:
       {
-        //stats.message = 'Extraindo links...';
+        stats.message = 'Extraindo links...';
         self.scrapeLinks(callback);
       } break;
       case TASK.GET_DETAILS:
       {
-        //stats.message = 'Extraindo detalhes das licitações...';
+        stats.message = 'Extraindo detalhes das licitações...';
         self.scrapeDetails(callback);
       } break;
     }
+
+    self.emitAsync('stats', stats);
   });
 
   // Loop through all routines and add to queue
