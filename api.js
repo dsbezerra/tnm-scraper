@@ -49,8 +49,6 @@ ScraperAPI.prototype.runScraper = (req, res) => {
   
   const id = req.body.id;
   const taskId = uuid.v1();
-
-  console.log(req.body);
   
   if(id && isNaN(id)) {
     findScraperIncludingLastResults(id, (err, scraper) => {
@@ -75,6 +73,9 @@ ScraperAPI.prototype.runScraper = (req, res) => {
               var r = new Result(results[i]);
               r.save();
             }
+          }
+          else {
+            delete self.progress[taskId];
           }
         });
 

@@ -487,7 +487,16 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   
   var contents = self.results[TASK.GET_LINKS];
   if(contents) {
+    if(contents.length === 0) {
+      self.routineQueue.kill();
+      self.stats.isRunning = false;
+      self.stats.message = 'Nenhuma licitação nova encontrada!';
 
+      if(self.completeCallback) {
+        return self.completeCallback(null, contents);
+      }
+    }
+      
     // Update total biddings
     stats.totalBiddings = contents.length;
     
