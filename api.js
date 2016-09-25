@@ -66,6 +66,12 @@ ScraperAPI.prototype.runScraper = (req, res) => {
             console.log(err);
           }
 
+          updateRunning(scraper, false, (err, raw) => {
+            if(err) {
+              console.log(err);
+            }
+          });
+
           // Save in database
           if(results.length > 0) {
             for(var i = 0; i < results.length; ++i) {
@@ -102,13 +108,6 @@ ScraperAPI.prototype.runScraper = (req, res) => {
         // On results, save in database and send data to client
         _scraper.on('finish', (data) => {
           // Remove from running
-          
-          updateRunning(scraper, false, (err, raw) => {
-            if(err) {
-              console.log(err);
-            }
-          });
-
           console.log(data);
           delete self.progress[taskId];
           
