@@ -317,7 +317,7 @@ ScraperAPI.prototype.deleteScraper = (req, res) => {
  * Updates running property
  */
 function updateRunning(scraper, running, callback) {
-  Scraper.update({ _id: scraper._id }, Object.assign(scraper, { running }), (err, raw) => {
+  Scraper.update({ _id: scraper._id }, Object.assign(scraper, { running: running, lastRunDate: new Date() }), (err, raw) => {
     if(err) {
       return callback(err);
     }

@@ -933,12 +933,11 @@ function buildSelectorString(selector) {
  */
 function isFileDownloadLink(string) {
   if(!string) return false;
+  var test = string.toLowerCase();
   return (
-    string.endsWith('.pdf')  || string.endsWith('.PDF')  ||
-    string.endsWith('.doc')  || string.endsWith('.DOC')  ||
-    string.endsWith('.docx') || string.endsWith('.DOCX') ||
-    string.endsWith('.zip')  || string.endsWith('.ZIP')  ||
-    string.endsWith('.rar')  || string.endsWith('.RAR')
+    test.endsWith('.pdf')  || test.endsWith('.doc')  || 
+    test.endsWith('.docx') || test.endsWith('.zip')  || 
+    test.endsWith('.rar')  || test.endsWith('.odt')
   );
 }
 
@@ -1204,9 +1203,10 @@ function extractContent(stats, options, routine, $) {
             stats.newBiddings++;
           }
           else {
-            stats.totalBiddings++;
             console.log(`[${content._hash}][${content.number}] Already in database!!!`);
           }
+
+          stats.totalBiddings++;
         }
       }
     }
