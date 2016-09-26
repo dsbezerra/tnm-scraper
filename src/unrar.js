@@ -19,7 +19,7 @@ function UnRAR(path) {
 
   var self = this;
   
-  exec('chmod u+x ' + UNRAR_PATH);
+  exec('chmod +x ' + UNRAR_PATH);
 
   self.filePath = path;
 
