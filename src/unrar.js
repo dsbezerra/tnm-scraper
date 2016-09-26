@@ -6,7 +6,7 @@ const exec = require('child_process').exec;
  */
 
 const UNRAR_PATH = path.resolve('./', 'thirdparty/rar/unrar');
-const TMP_PATH = './data/tmp');
+const TMP_PATH = './data/tmp';
 
 function UnRAR(path) {
 
