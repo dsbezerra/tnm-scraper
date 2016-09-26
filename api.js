@@ -12,7 +12,16 @@ mongoose.Promise = global.Promise;
 const Scraper = require('./src/models/scraper');
 const Result  = require('./src/models/result');
 
+const UnRAR = require('./src/unrar');
+
 const scrape = require('./index');
+
+var rar = new UnRAR('./data/Edital.rar');
+rar.extract(function(err) {
+  if(err) {
+    console.log(err);
+  }
+});
 
 function ScraperAPI() {
   let self = this;
@@ -125,6 +134,13 @@ ScraperAPI.prototype.runScraper = (req, res) => {
     return res.status(500)
               .send(makeError('id params is invalid!'));
   }
+}
+
+/**
+ * POST /scrapers/convertFile
+ */
+ScraperAPI.prototype.convertFile = (req, res) => {
+  var rar = new UnRAR('./')
 }
 
 /**
