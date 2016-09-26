@@ -28,10 +28,8 @@ UnRAR.prototype.extract = function(callback) {
   if(self.filePath) {
     const unrarPath = 'thirdparty/rar/unrar ';
     const unrarCommand = `x ${self.filePath}`;
-
-    console.log(path.resolve());
-
-    var p = path.resolve('../', unrarPath + unrarCommand);
+    
+    var p = path.resolve('./', unrarPath + unrarCommand);
     console.log(p);
     exec(p, function(error, stdout, stderr) {
       if (error) {
