@@ -31,7 +31,7 @@ UnRAR.prototype.extract = function(callback) {
 
     var p = path.resolve('../', unrarPath + unrarCommand);
     console.log(p);
-    exec(p), function(error, stdout, stderr) {
+    exec(p, function(error, stdout, stderr) {
       if (error) {
         console.error(`exec error: ${error}`);
         return callback(error);
