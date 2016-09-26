@@ -6,6 +6,7 @@ const exec = require('child_process').exec;
  */
 
 const UNRAR_PATH = path.resolve('./', 'thirdparty/rar/unrar');
+const TMP_PATH = path.resolve('./', 'data/tmp');
 
 function UnRAR(path) {
 
@@ -18,9 +19,7 @@ function UnRAR(path) {
   }
 
   var self = this;
-  
   exec('chmod +x ' + UNRAR_PATH);
-
   self.filePath = path;
 
   return self;
@@ -30,7 +29,7 @@ UnRAR.prototype.extract = function(callback) {
   var self = this;
 
   if(self.filePath) {
-    const unrarCommand = ` x ${self.filePath}`;
+    const unrarCommand = ` e ${self.filePath} ${TMP_PATH}`;
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
       if (error) {
         console.error(`exec error: ${error}`);
