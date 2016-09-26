@@ -5,8 +5,8 @@ const exec = require('child_process').exec;
  * Wrapper for command-line unrar
  */
 
-const UNRAR_PATH = path.resolve('./', 'thirdparty/rar/unrar');
-const TMP_PATH = path.resolve('./', 'data/tmp');
+const UNRAR_PATH = './thirdparty/rar/unrar';
+const TMP_PATH = './data/tmp';
 
 function UnRAR(path) {
 
