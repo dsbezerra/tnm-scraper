@@ -61,16 +61,17 @@ ScraperAPI.prototype.runScraper = (req, res) => {
         };
         const configPath = path.join('scrapers', scraper._id + '.json');
         const _scraper = scrape(configPath, options, (err, results) => {
-          if(err) {
-            // TODO(diego): Emit error event
-            console.log(err);
-          }
 
           updateRunning(scraper, false, (err, raw) => {
             if(err) {
               console.log(err);
             }
           });
+          
+          if(err) {
+            // TODO(diego): Emit error event
+            console.log(err);
+          }
 
           // Save in database
           if(results.length > 0) {
