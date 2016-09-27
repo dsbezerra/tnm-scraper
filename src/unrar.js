@@ -31,7 +31,7 @@ UnRAR.prototype.extract = function(callback) {
   var self = this;
 
   if(self.filePath) {
-    const unrarCommand = ` e ${self.filePath}`;
+    const unrarCommand = ` x ${self.filePath}`;
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
       if (error) {        
         console.error(`exec error: ${error}`);
