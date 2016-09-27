@@ -32,7 +32,7 @@ UnRAR.prototype.extract = function(callback) {
   var self = this;
 
   if(self.filePath) {
-    const unrarCommand = ` e ${self.filePath} ${TMP_PATH}`;
+    const unrarCommand = ` e -ai -cl ${self.filePath} ${TMP_PATH}`;
     fs.chmodSync(UNRAR_PATH, 0777);
     fs.chmodSync(TMP_PATH, 0777);
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
