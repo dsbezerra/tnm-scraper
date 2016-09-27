@@ -1,3 +1,4 @@
+const fs   = require('fs');
 const path = require('path');
 const exec = require('child_process').exec;
 
@@ -19,7 +20,7 @@ function UnRAR(path) {
   }
 
   var self = this;
-  exec('chmod +x ' + UNRAR_PATH);
+  fs.chmodSync(UNRAR_PATH, 777);
   self.filePath = path;
 
   return self;
@@ -32,6 +33,11 @@ UnRAR.prototype.extract = function(callback) {
     const unrarCommand = ` e ${self.filePath} ${TMP_PATH}`;
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
       if (error) {
+
+        if(error.indexOf('Permission denied.') > -1) {
+
+        }
+        
         console.error(`exec error: ${error}`);
         return callback(error);
       }
