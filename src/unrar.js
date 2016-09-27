@@ -32,12 +32,7 @@ UnRAR.prototype.extract = function(callback) {
   if(self.filePath) {
     const unrarCommand = ` e ${self.filePath} ${TMP_PATH}`;
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
-      if (error) {
-
-        if(error.indexOf('Permission denied.') > -1) {
-
-        }
-        
+      if (error) {        
         console.error(`exec error: ${error}`);
         return callback(error);
       }
