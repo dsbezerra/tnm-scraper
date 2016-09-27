@@ -20,6 +20,7 @@ function UnRAR(path) {
   }
 
   var self = this;
+
   fs.chmodSync(UNRAR_PATH, 777);
   self.filePath = path;
 
@@ -30,7 +31,7 @@ UnRAR.prototype.extract = function(callback) {
   var self = this;
 
   if(self.filePath) {
-    const unrarCommand = ` e ${self.filePath} ${TMP_PATH}`;
+    const unrarCommand = ` e ${self.filePath}`;
     exec(UNRAR_PATH + unrarCommand, function(error, stdout, stderr) {
       if (error) {        
         console.error(`exec error: ${error}`);
