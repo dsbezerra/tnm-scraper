@@ -16,7 +16,7 @@ const UnRAR = require('./src/unrar');
 
 const scrape = require('./index');
 
-var rar = new UnRAR('./data/Edital.rar');
+var rar = new UnRAR('data/Edital.rar');
 rar.extract(function(err) {
   if(err) {
     console.log(err);
