@@ -113,6 +113,15 @@ function TNMScraper(options) {
 
   // Scraper model
   self.scraper = null;
+
+  self.page = {
+    // Cheerio loaded body
+    '$': {},
+    // Full url of page
+    uri: '',
+    // Path of page
+    path: '',
+  };
   
   // Scraper request object
   self.request = request;
@@ -147,9 +156,9 @@ function TNMScraper(options) {
     currentBidding: 0,
     newBiddings: 0,
     
-    // Routines Stats
-    totalRoutines: 0,
-    currentRoutine: 0,
+    // Routine Stats
+    totalTasks: 0,
+    currentTask: 0,
 
     // Pagination Stats
     totalPages: 0,
@@ -181,11 +190,9 @@ TNMScraper.prototype.init = function(options) {
   
   var self = this;  
   var options = self.options;
-
   var stats = self.stats;
 
-  stats.isRunning = true;
-  stats.message = 'Iniciando scraper...';
+  self.updateStat({message: 'Iniciando scraper...'});
   
   // Check for ASPForm Handler
   if(options.aspnet) {
@@ -239,10 +246,10 @@ TNMScraper.prototype.init = function(options) {
 
   if(options.routine) {
     self.routine = options.routine;
-    stats.totalRoutines = options.routine.length;
+    stats.totalTasks = options.routine.length;
     // Initialize regex strings to RegExp object
-    for(var routineIndex = 0; routineIndex < options.routine.length; ++routineIndex) {
-      var patterns = self.routine[routineIndex].patterns;
+    for(var task = 0; task < options.routine.length; ++task) {
+      var patterns = self.routine[task].patterns;
       if(patterns) {
         var keys = Object.keys(patterns);
         for(var keyIndex = 0; keyIndex < keys.length; ++keyIndex) {
@@ -255,8 +262,7 @@ TNMScraper.prototype.init = function(options) {
   else {
     var err = new Error('Routine must exist in Scraper configuration.');
     Log.e(TAG, err.message);
-    stats.isRunning = false;
-    return self.completeCallback(err);
+    return;
   }
 
   if(options.scraper) {
@@ -276,49 +282,48 @@ TNMScraper.prototype.init = function(options) {
  */
 TNMScraper.prototype.start = function() {
   var _TAG = `${TAG}(RoutineQueue)`;
-
   var self = this;
   var stats = self.stats;
- 
-  self.emitAsync('start', 'Scraper started!');
-  self.emitAsync('stats', stats);
+
+  self.updateStat({message: 'Scraper iniciado!'});
   
   // Define queue
   self.routineQueue = async.queue(function(routine, callback) {
     var id = routine.id;
+    var message = '';
     Log.i(_TAG, 'Starting routine: ' + routine.name);
     switch(id) {
       case TASK.GET_SESSION:
       {
-        stats.message = 'Adquirindo sessão...';
+        message = 'Adquirindo sessão...';
         self.getSession(callback);
       } break; 
       case TASK.GET_LINKS:
       {
-        stats.message = 'Extraindo links...';
+        message = 'Extraindo links...';
         self.scrapeLinks(callback);
       } break;
       case TASK.GET_DETAILS:
       {
-        stats.message = 'Extraindo detalhes das licitações...';
+        message = 'Extraindo detalhes das licitações...';
         self.scrapeDetails(callback);
       } break;
     }
 
-    self.emitAsync('stats', stats);
+    self.updateStat({message: message});
   });
 
-  // Loop through all routines and add to queue
+  // Loop through all tasks and add to queue
   var routine = self.routine;
-  for(var routineIndex = 0; routineIndex < routine.length; ++routineIndex) {
-    self.routineQueue.push(routine[routineIndex], function(err, result) {
+  for(var task = 0; task < routine.length; ++task) {
+    self.routineQueue.push(routine[task], function(err, result) {
       // Default callback
       if(err) {
         Log.e(TAG, err.message);
         return;
       }
       
-      var routineId = routine[stats.currentRoutine].id;
+      var routineId = routine[stats.currentTask].id;
       
       if(result) {
         if(result.length === 0) {
@@ -331,7 +336,7 @@ TNMScraper.prototype.start = function() {
       }
 
       
-      Log.i(_TAG, 'Finished routine: ' + routine[stats.currentRoutine++].name, result);
+      Log.i(_TAG, 'Finished routine: ' + routine[stats.currentTask++].name, result);
     });
   }
 
@@ -351,11 +356,29 @@ TNMScraper.prototype.start = function() {
   }
 }
 
+TNMScraper.prototype.handleError = function(err) {
+  var self = this;
+  var stats = self.stats;
+  
+  Log.e(TAG, err.message);
+  
+  self.routineQueue.kill();
+  self.updateStat({ error: err, isRunning: false });
+  
+  if(self.completeCallback) {
+    return self.completeCallback(err);
+  }
+  else {
+    return err;
+  }
+}
+
 
 /**
- * GetSession routine
- * Must be used to get cookies or ASPNet form data populated (example E-Negócios-SP)
- * @param {function} callback Callback that notify the routine queue to advance
+ * GetSession Task
+ * This task must be the first to be executed if the website needs session to
+ * resolve its requests.
+ * @param {function} nextTask Notifies the queue to advance
  */
 TNMScraper.prototype.getSession = function(nextTask) {
 
@@ -369,22 +392,22 @@ TNMScraper.prototype.getSession = function(nextTask) {
       uri: options.baseURI
     };
 
-    self.performRequest(requestParams, function(err, page) {
-      if(err) {
-        self.stats.isRunning = false;
-        return self.completeCallback(err, null);
+    self.performRequest(requestParams, function(err) {
+      if(!err) {
+        var $ = self.page.$;
+        if(self.aspnet) {
+          self.aspNetForm = getAspNetFormData($);
+        }
+        nextTask();
       }
-
-      var $ = page['$'];
-      if(self.aspnet) {
-        self.aspNetForm = getAspNetFormData($);
+      else {
+        return handleError(err);
       }
-      
-      nextTask();
     });
   }
   else {
-    // TODO(diego): Logging
+    var err = new Error('A baseURI must be provided to run this task!');
+    return handleError(err);
   }
 }
 
@@ -828,16 +851,12 @@ TNMScraper.prototype.performRequest = function(params, callback) {
       if(err) {
         return callback(err, null);
       }
-      
-      var page = {
-        uri: response.request.uri.href,
-        path: response.request.uri.path,
-        '$': loadBody(self.options.charset, body)      
-      };
-      
-      //self.currentPage = page;
-      
-      return callback(null, page);
+
+      self.page.$ = loadBody(self.options.charset, body);
+      self.page.uri = response.request.uri.href;
+      self.page.path = response.request.uri.path;
+    
+      return callback(null);
     });
 
   }, delay);
