@@ -13,15 +13,23 @@ const Scraper = require('./src/models/scraper');
 const Result  = require('./src/models/result');
 
 const UnRAR = require('./src/unrar');
+const fileutils = require("./src/utils/fileutils");
 
 const scrape = require('./index');
 
+
+fileutils.createDirectory('data\\teste\\teste\\teste\\teste\\teste');
+
+
 var rar = new UnRAR('data/Edital.rar');
-rar.extract(function(err) {
-  if(err) {
-    console.log(err);
-  }
-});
+
+/*var result = rar.extractSync();
+if(result) {
+  console.log(result);
+}
+else {
+  console.log('Something bad happened!');
+}*/
 
 function ScraperAPI() {
   let self = this;

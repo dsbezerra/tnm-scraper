@@ -2,7 +2,6 @@ const express      = require('express');
 const bodyParser   = require('body-parser');
 const compression  = require('compression');
 const logger       = require('morgan');
-const mongodb      = require('mongodb');
 
 const ScraperAPI = require('./api');
 
@@ -86,10 +85,6 @@ app.put('/scrapers/:id', scraperApi.updateScraper);
 
 // Delete a scraper
 app.delete('/scrapers/:id', scraperApi.deleteScraper);
-
-
-
-
 
 app.listen(app.get('port'), () => {
   console.log('Server started listening...');
