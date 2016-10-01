@@ -17,20 +17,6 @@ const fileutils = require("./src/utils/fileutils");
 
 const scrape = require('./index');
 
-
-fileutils.createDirectory('data\\teste\\teste\\teste\\teste\\teste');
-
-
-var rar = new UnRAR('data/Edital.rar');
-
-/*var result = rar.extractSync();
-if(result) {
-  console.log(result);
-}
-else {
-  console.log('Something bad happened!');
-}*/
-
 function ScraperAPI() {
   let self = this;
 

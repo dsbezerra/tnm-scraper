@@ -1,4 +1,5 @@
 const fs = require("fs");
+const uuid = require("node-uuid");
 
 /**
  * Get all filenames found in a given directory 
@@ -71,6 +72,16 @@ function createDirectory(path) {
   }
 }
 
+function createRandomDirectoryAt(path) {
+  var randomName = uuid.v1();
+  var finalPath = path + '/' + randomName;
+  fs.mkdirSync(finalPath);
+  
+  return {
+    id: randomName,
+    destPath: finalPath
+  }
+}
 
 function removeFile(path) {
   fs.unlinkSync(path);
@@ -136,6 +147,7 @@ exports.getFilenamesFromDirectory = getFilenamesFromDirectory;
 exports.isDirectory = isDirectory;
 exports.isFile = isFile;
 exports.createDirectory = createDirectory;
+exports.createRandomDirectoryAt = createRandomDirectoryAt;
 exports.removeFile = removeFile;
 exports.removeDirectory = removeDirectory;
 exports.exists = exists;

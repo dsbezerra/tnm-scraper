@@ -8,14 +8,13 @@ const spawnSync = child_process.spawnSync;
 const fileutils = require('./utils/fileutils');
 
 /**
- * Wrapper for command-line unrar
+ * Wrapper for command-line unzip
  */
  
 const CURRENT_WORKING_DIR = process.cwd() + '/';
-const UNRAR_PATH = CURRENT_WORKING_DIR + 'thirdparty/rar/unrar';
 const TMP_PATH = CURRENT_WORKING_DIR + 'data/tmp';
 
-function UnRAR(path) {
+function UnZIP(path) {
 
   if(!path) {
     throw new Error('Path is invalid!');
@@ -25,7 +24,7 @@ function UnRAR(path) {
     throw new Error('Path must be a string!');
   }
   
-  if(!path.toLowerCase().endsWith('.rar')) {
+  if(!path.toLowerCase().endsWith('.zip')) {
     throw new Error('Invalid file format!');
   }
 
@@ -35,29 +34,25 @@ function UnRAR(path) {
   
   if(!fileutils.exists(TMP_PATH))
     fileutils.createDirectory(TMP_PATH);
-    
-  fs.chmodSync(UNRAR_PATH, 0o777);
 
   return self;
 }
 
 /**
- * Extracts all contents inside .rar file to a random destination path
- * COMMAND > unrar e -ai path dest_path
- *  e         - Extract contents <command>
- * -ai        - Ignore file attributes [switch]
- * path       - Path to file to be extracted
+ * Extracts all contents inside .zip file to a random destination path
+ * COMMAND > unzip file_path -d dest_path
+ * filePath   - Zip file path
+ * -d         - Used to define an destination directory
  * dest_path  - Destination path of extracted files
  */
-UnRAR.prototype.extract = function(callback) {
+UnZIP.prototype.extract = function(callback) {
   var self = this;
-
+  
   if(self.filePath) {
-
     var result = fileutils.createRandomDirectoryAt(TMP_PATH);
     
-    const COMMAND = ` e -ai ${self.filePath} ${result.destPath}`;
-    var child = exec(UNRAR_PATH + COMMAND, function(error, stdout, stderr) {
+    const COMMAND = `unzip ${self.filePath} -d ${result.destPath}`;
+    var child = exec(COMMAND, function(error, stdout, stderr) {
       if(error) {
         console.error(`exec error: ${error}`);
         return callback(error);
@@ -80,20 +75,17 @@ UnRAR.prototype.extract = function(callback) {
       }
     });
   }
-  else {
-    return callback(new Error('File path is invalid!'));
-  }
 }
 
 /**
- * Synchronous version of UnRAR.extract
+ * Synchronous version of UnZIP.extract
  */
-UnRAR.prototype.extractSync = function() {
+UnZIP.prototype.extractSync = function(callback) {
   var self = this;
   
   if(self.filePath) {
     var result = fileutils.createRandomDirectoryAt(TMP_PATH);
-    var child = spawnSync(UNRAR_PATH, ['e', '-ai', self.filePath, result.destPath]);
+    var child = spawnSync('unzip', [self.filePath, '-d', result.destPath]);
     
     if(child.status === 0) {
       console.log('Success!');
@@ -107,4 +99,4 @@ UnRAR.prototype.extractSync = function() {
   }
 }
 
-module.exports = UnRAR;
+module.exports = UnZIP;
