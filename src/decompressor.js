@@ -55,12 +55,14 @@ Decompressor.prototype.exec = function(callback) {
   }
 
   if (process) {
-    console.log('Extraction finished successfully!\nDestination path is: ' + decompressed.destPath);
+    console.log('Extraction finished successfully!');
     
     if (typeof callback === 'function') {
       process.extract(function(err, decompressed) {
         if (err) return callback(err);
         else self.decompressed.push(decompressed);
+        
+        console.log('Destination path is: ' + decompressed.destPath);
         
         return callback(null, decompressed);
       });
@@ -68,6 +70,7 @@ Decompressor.prototype.exec = function(callback) {
     else {
       var decompressed = process.extractSync();
       self.decompressed.push(decompressed);
+      console.log('Destination path is: ' + decompressed.destPath);
       return decompressed;
     }
   }
