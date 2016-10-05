@@ -327,28 +327,17 @@ TNMScraper.prototype.start = function() {
       var taskId = routine[stats.currentTask].id;
       
       if(result) {
-        if(result.length === 0) {
-          self.routineQueue.kill();
-          stats.isRunning = false;
-          return self.completeCallback(null, result);
-        }
-        
         self.results[taskId] = result;
       }
-
       
       Log.i(_TAG, 'Finished task: ' + routine[stats.currentTask++].name, result);
     });
   }
 
   // Complete
-  self.routineQueue.drain = function(err) {
+  self.routineQueue.drain = function() {
+    Log.i(TAG, "Finished running scraper!");
     if(self.completeCallback) {
-      if(err) {
-        stats.isRunning = false;
-        return self.completeCallback(err, null);
-      }
-
       var notices = self.results[TASK.GET_DETAILS];
       stats.isRunning = false;
       self.emitAsync('finish', notices);
@@ -430,8 +419,8 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
           stats.isRunning = false;
           return self.completeCallback(err, null);
         }
-  
-        nextTask(null, contents);        
+        
+        return nextTask(null, contents);
       });
     }
     else {
@@ -462,7 +451,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
             stats.isRunning = false;
             return self.completeCallback(err, null);
           }
-          nextTask(null, contents);
+          return nextTask(null, contents);
         });
         
       });
@@ -473,7 +462,6 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
     self.stats.isRunning = false;
     return self.completeCallback(err, null);
   }
-  
 }
 
 
@@ -520,14 +508,8 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   var contents = self.results[TASK.GET_LINKS];
   if(contents) {
     if(contents.length === 0) {
-      self.routineQueue.kill();
-      self.stats.isRunning = false;
       self.stats.message = 'Nenhuma licitação nova encontrada!';
-
-      if(self.completeCallback) {
-        stats.isRunning = false;
-        return self.completeCallback(null, contents);
-      }
+      return callback(null, contents);
     }
     
     detailsQueue.push(contents, function(err, resultNotice) {
