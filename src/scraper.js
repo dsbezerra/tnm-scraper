@@ -286,7 +286,7 @@ TNMScraper.prototype.start = function() {
   var stats = self.stats;
 
   self.emitAsync('start', 'Rodando scraper...');
-  self.updateStat({message: 'Rodando scraper...'});
+  self.updateStat({message: 'Rodando scraper...', isRunning: true });
   
   // Define queue
   self.routineQueue = async.queue(function(task, callback) {
@@ -1313,7 +1313,8 @@ function extractText(item, selector, pattern) {
 /**
  * Extracts link from element
  * @param {object} item - html element
- * @param {string} selector - link selector
+ * @param {String} selector - link selector
+ * @param {String} Returns the link
  */
 function extractLink(item, selector) {
   var link = '';
@@ -1380,8 +1381,6 @@ function checkForDoPostBack(href) {
   //value = value.replace(/\$/g, '_');
   return value;
 }
-
-
 
 function convertToDateFormat(dateString) {
   var date;
