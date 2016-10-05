@@ -285,6 +285,7 @@ TNMScraper.prototype.start = function() {
   var self = this;
   var stats = self.stats;
 
+  self.emitAsync('start', 'Rodando scraper...');
   self.updateStat({message: 'Rodando scraper...'});
   
   // Define queue
@@ -661,7 +662,8 @@ TNMScraper.prototype._resolveLinks = function(links, page, uri, callback) {
         }
       },
       function(err) {
-        callback(null, links);
+        if(err) return self.handleError(err);
+        return callback(null, links);
       }
     );
   }
