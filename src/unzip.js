@@ -34,6 +34,8 @@ function UnZIP(path) {
 
   if (!fileutils.exists(TMP_PATH))
     fileutils.createDirectory(TMP_PATH);
+    
+  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 0o777);
 
   return self;
 }

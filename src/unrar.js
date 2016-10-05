@@ -37,6 +37,7 @@ function UnRAR(path) {
     fileutils.createDirectory(TMP_PATH);
 
   fs.chmodSync(UNRAR_PATH, 0o777);
+  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 0o777);
 
   return self;
 }
