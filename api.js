@@ -115,12 +115,6 @@ ScraperAPI.prototype.runScraper = (req, res) => {
           // Remove from running
           console.log(data);
           delete self.progress[taskId];
-
-          // Save in database
-
-          // Send saved in db to client
-
-
         });
       }
     });

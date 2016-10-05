@@ -285,7 +285,7 @@ TNMScraper.prototype.start = function() {
   var self = this;
   var stats = self.stats;
 
-  self.updateStat({message: 'Scraper iniciado!'});
+  self.updateStat({message: 'Rodando scraper...'});
   
   // Define queue
   self.routineQueue = async.queue(function(task, callback) {
@@ -401,13 +401,13 @@ TNMScraper.prototype.getSession = function(nextTask) {
         nextTask();
       }
       else {
-        return handleError(err);
+        return self.handleError(err);
       }
     });
   }
   else {
     var err = new Error('A baseURI must be provided to run this task!');
-    return handleError(err);
+    return self.handleError(err);
   }
 }
 
@@ -712,6 +712,8 @@ TNMScraper.prototype.handlePagination = function (callback) {
       self.performRequest(requestParams, function(err, page) {
 
         stats.currentPage++;
+        if(stats.totalPages === 0)
+          stats.totalPages = stats.currentPage;
         
         // Update nextPage
         var $ = page['$'];
