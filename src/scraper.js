@@ -278,7 +278,7 @@ TNMScraper.prototype.init = function(options) {
 }
 
 /**
- * Start the scraper routines
+ * Start the scraper routine
  */
 TNMScraper.prototype.start = function() {
   var _TAG = `${TAG}(RoutineQueue)`;
