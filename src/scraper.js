@@ -288,10 +288,10 @@ TNMScraper.prototype.start = function() {
   self.updateStat({message: 'Scraper iniciado!'});
   
   // Define queue
-  self.routineQueue = async.queue(function(routine, callback) {
-    var id = routine.id;
+  self.routineQueue = async.queue(function(task, callback) {
+    var id = task.id;
     var message = '';
-    Log.i(_TAG, 'Starting routine: ' + routine.name);
+    Log.i(_TAG, 'Starting task: ' + task.name);
     switch(id) {
       case TASK.GET_SESSION:
       {
@@ -323,7 +323,7 @@ TNMScraper.prototype.start = function() {
         return;
       }
       
-      var routineId = routine[stats.currentTask].id;
+      var taskId = routine[stats.currentTask].id;
       
       if(result) {
         if(result.length === 0) {
@@ -332,11 +332,11 @@ TNMScraper.prototype.start = function() {
           return self.completeCallback(null, result);
         }
         
-        self.results[routineId] = result;
+        self.results[taskId] = result;
       }
 
       
-      Log.i(_TAG, 'Finished routine: ' + routine[stats.currentTask++].name, result);
+      Log.i(_TAG, 'Finished task: ' + routine[stats.currentTask++].name, result);
     });
   }
 
@@ -415,13 +415,15 @@ TNMScraper.prototype.getSession = function(nextTask) {
 /* ScrapeLinks Routine function */
 TNMScraper.prototype.scrapeLinks = function(nextTask) {
 
+  var _TAG = `${TAG}(scrapeLinks)`;
+
   var self = this;
   var stats = self.stats;
   
-  var currentRoutine = stats.currentRoutine;
-  var routine = self.routine[currentRoutine];
-  if(routine) {
-    if(routine.pagination) {
+  var currentTask = stats.currentTask;
+  var task = self.routine[currentTask];
+  if(task) {
+    if(task.pagination) {
       self.handlePagination(function(err, contents) {
         if(err) {
           stats.isRunning = false;
@@ -434,8 +436,8 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
     else {
       // TODO(diego): Move this to a function
       var requestParams;
-      if(routine.request) {
-        requestParams = routine.request;
+      if(task.request) {
+        requestParams = task.request;
       }
       else {
         Log.e(_TAG, 'requestParams must be a valid object');
@@ -450,7 +452,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
           return self.completeCallback(err, null);
         }
         
-        var extracted = extractContent(stats, self.options, routine, page['$']);
+        var extracted = extractContent(stats, self.options, task, page['$']);
 
         self.emitAsync('stats', stats);
         
@@ -466,7 +468,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
     }
   }
   else {
-    var err = new Error('Invalid routine!');
+    var err = new Error('Invalid task!');
     self.stats.isRunning = false;
     return self.completeCallback(err, null);
   }
@@ -482,8 +484,8 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   var self = this;
   var stats = self.stats;
   
-  var currentRoutine = stats.currentRoutine;
-  var routine = self.routine[currentRoutine];
+  var currentTask = stats.currentTask;
+  var task = self.routine[currentTask];
 
   // Detail pages queue
   var detailsQueue = async.queue(function(content, next) {
@@ -499,7 +501,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
         return callback(err, null);
       }
 
-      var notice = extractNotice(page['$'], routine.selectors, routine.patterns, page.uri);
+      var notice = extractNotice(page['$'], task.selectors, task.patterns, page.uri);
       
       if(notice) {
         notice._hash = content._hash;
@@ -605,10 +607,10 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
     );
   }
   else {
-    var routine = self.routine[stats.currentRoutine];
-    if(routine.request && routine.request.baseURI) {
+    var task = self.routine[stats.currentTask];
+    if(task.request && task.request.baseURI) {
       while(contentIndex < contents.length) {
-        var baseURI = routine.request.baseURI;
+        var baseURI = task.request.baseURI;
         contents[contentIndex].link = baseURI + contentIndex[contentIndex++].link;
       }
     }
@@ -665,10 +667,10 @@ TNMScraper.prototype._resolveLinks = function(links, page, uri, callback) {
   }
   else {
     
-    var routine = self.routine[stats.currentRoutine];
-    if(routine.request && routine.request.baseURI) {
+    var task = self.routine[stats.currentTask];
+    if(task.request && task.request.baseURI) {
       while(linkIndex < links.length) {
-        var baseURI = routine.request.baseURI;
+        var baseURI = task.request.baseURI;
         links[linkIndex] = baseURI + links[linkIndex++];
       }
     }
@@ -685,18 +687,18 @@ TNMScraper.prototype.handlePagination = function (callback) {
   var self = this;
   var stats = self.stats;
   
-  var routine = self.routine[stats.currentRoutine];
+  var task = self.routine[stats.currentTask];
   var options = self.options;
-  var selectors = routine.selectors;
-  var requestParams = routine.request;
+  var selectors = task.selectors;
+  var requestParams = task.request;
   var nextPage, prevPage, combinedLinks = [];  
 
   if(!requestParams) {
-    Log.e(TAG, 'routine has no property request');
-    return callback('routine has no property request', null);
+    Log.e(TAG, 'task has no property request');
+    return callback('task has no property request', null);
   }
   
-  if(!routine.request.baseURI) {
+  if(!task.request.baseURI) {
     requestParams.baseURI = options.baseURI;
   }
 
@@ -728,11 +730,11 @@ TNMScraper.prototype.handlePagination = function (callback) {
 
         // Update form parameters
         if(self.aspnet) {
-          self.aspNetForm = getAspNetFormData($, nextPage || routine.request.form['__EVENTTARGET']);
+          self.aspNetForm = getAspNetFormData($, nextPage || task.request.form['__EVENTTARGET']);
           requestParams.form = self.aspNetForm;
         }
         
-        var extracted = extractContent(stats, options, routine, $);
+        var extracted = extractContent(stats, options, task, $);
         self.emitAsync('stats', stats);
         self.resolveLinks(extracted, $, requestParams.uri, function(err, result) {
           if(err) {
@@ -1186,15 +1188,17 @@ function loadBody(charset, body) {
 /**
  * Change this to extract content
  */
-function extractContent(stats, options, routine, $) {
+function extractContent(stats, options, task, $) {
+  var _TAG = `${TAG}(extractContent)`;
+  
   var container, selectors, patterns, contents = [];
   
-  selectors = routine.selectors;
+  selectors = task.selectors;
   if(!selectors) {
-    Log.e(_TAG, 'No selectors found in routine.');
+    Log.e(_TAG, 'No selectors found in task.');
     return contents;
   }
-  patterns = routine.patterns;
+  patterns = task.patterns;
   
   container = selectors.container;
   if(container) {
@@ -1204,7 +1208,7 @@ function extractContent(stats, options, routine, $) {
     Log.w(_TAG, 'No container selector specified.');
   }
   
-  if(routine.list && container) {
+  if(task.list && container) {
     if(selectors.listItem) {
 
       var items = container.find(selectors.listItem);
