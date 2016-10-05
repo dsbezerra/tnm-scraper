@@ -43,15 +43,15 @@ Decompressor.prototype.exec = function(callback) {
 
   switch (self.extension) {
     case 'rar':
-      {
-        process = new UnRAR(self.path);
-      }
-      break;
+    {
+      process = new UnRAR(self.path);
+    }
+    break;
     case 'zip':
-      {
-        process = new UnZIP(self.path);
-      }
-      break;
+    {
+      process = new UnZIP(self.path);
+    }
+    break;
   }
 
   if (process) {

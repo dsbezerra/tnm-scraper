@@ -13,7 +13,7 @@ const fileutils = require('./utils/fileutils');
 
 const CURRENT_WORKING_DIR = process.cwd() + '/';
 const UNRAR_PATH = CURRENT_WORKING_DIR + 'thirdparty/rar/unrar';
-const TMP_PATH = CURRENT_WORKING_DIR + 'data/tmp';
+const TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
 
 function UnRAR(path) {
 

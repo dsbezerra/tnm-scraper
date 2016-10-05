@@ -12,7 +12,7 @@ const fileutils = require('./utils/fileutils');
  */
 
 const CURRENT_WORKING_DIR = process.cwd() + '/';
-const TMP_PATH = CURRENT_WORKING_DIR + 'data/tmp';
+const TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
 
 function UnZIP(path) {
 
