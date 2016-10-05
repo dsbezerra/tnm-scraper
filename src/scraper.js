@@ -858,7 +858,7 @@ TNMScraper.prototype.performRequest = function(params, callback) {
       self.page.uri = response.request.uri.href;
       self.page.path = response.request.uri.path;
     
-      return callback(null);
+      return callback(null, self.page);
     });
 
   }, delay);
