@@ -3,6 +3,9 @@ const bodyParser   = require('body-parser');
 const compression  = require('compression');
 const logger       = require('morgan');
 
+
+const FilesController = require('./src/controllers/files');
+
 const ScraperAPI = require('./api');
 
 const app = express();
@@ -62,7 +65,7 @@ app.get('/scrapers/city/:id', scraperApi.getScraperByCity);
 // *DOC*
 // method - GET
 // desc - Get pending results from a scraper
-// endpint - /scrapers/pending/:id
+// endpoint - /scrapers/pending/:id
 //
 app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 
@@ -70,9 +73,16 @@ app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 // *DOC*
 // method - GET
 // desc - Check progress of running scraper
-// endpint - /scrapers/checkProgress/:id
+// endpoint - /scrapers/checkProgress/:id
 //
 app.get('/scrapers/checkProgress/:id', scraperApi.checkProgress);
+
+//
+// *DOC*
+// method - POST
+// desc - Process a file and extracts or convert to pdf
+// endpoint - /files/process
+app.post('/files/process', FilesController.process);
 
 // Inserts a scraper
 app.post('/scrapers', scraperApi.insertScraper);

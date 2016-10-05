@@ -1,19 +1,19 @@
 'use strict'
 
-const secrets  = require('./config/secrets');
-const uuid     = require('node-uuid');
-const _        = require('lodash');
-const path     = require('path');
+const secrets = require('./config/secrets');
+const uuid = require('node-uuid');
+const _ = require('lodash');
+const path = require('path');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 mongoose.Promise = global.Promise;
 
 const Scraper = require('./src/models/scraper');
-const Result  = require('./src/models/result');
+const Result = require('./src/models/result');
 
-const UnRAR = require('./src/unrar');
 const fileutils = require("./src/utils/fileutils");
+const networkutils = require('./src/utils/networkutils');
 
 const scrape = require('./index');
 
@@ -21,7 +21,7 @@ function ScraperAPI() {
   let self = this;
 
   self.progress = null;
-  
+
   self.init();
 }
 
@@ -30,12 +30,12 @@ ScraperAPI.prototype.init = () => {
   const db = secrets.db;
 
   var uri = `mongodb://${db.user}:${db.pwd}@${db.host}:${db.port}/${db.name}`;
-  if(process.env.MONGODB_URI) {
+  if (process.env.MONGODB_URI) {
     uri = process.env.MONGODB_URI;
   }
-  
+
   mongoose.connect(uri, (err) => {
-    if(err) console.log(err);
+    if (err) console.log(err);
     else console.log('Connected to database!');
   });
 
@@ -49,16 +49,15 @@ ScraperAPI.prototype.init = () => {
 ScraperAPI.prototype.runScraper = (req, res) => {
 
   let self = this;
-  
+
   const id = req.body.id;
   const taskId = uuid.v1();
-  
-  if(id && isNaN(id)) {
+
+  if (id && isNaN(id)) {
     findScraperIncludingLastResults(id, (err, scraper) => {
-      if(err) {
+      if (err) {
         console.log(err);
-      }
-      else {
+      } else {
         const options = {
           scraper: scraper,
         };
@@ -66,45 +65,47 @@ ScraperAPI.prototype.runScraper = (req, res) => {
         const _scraper = scrape(configPath, options, (err, results) => {
 
           updateRunning(scraper, false, (err, raw) => {
-            if(err) {
+            if (err) {
               console.log(err);
             }
           });
-          
-          if(err) {
+
+          if (err) {
             // TODO(diego): Emit error event
             console.log(err);
           }
 
           // Save in database
-          if(results.length > 0) {
-            for(var i = 0; i < results.length; ++i) {
-              results[i].scraper = scraper._id;            
+          if (results.length > 0) {
+            for (var i = 0; i < results.length; ++i) {
+              results[i].scraper = scraper._id;
               var r = new Result(results[i]);
               r.save();
             }
-          }
-          else {
+          } else {
             delete self.progress[taskId];
           }
         });
 
         _scraper.on('error', (message) => {
-          
+
         });
 
         // Add scraper to running
         _scraper.on('start', (message) => {
-          
+
           updateRunning(scraper, true, (err, raw) => {
-            if(err) {
+            if (err) {
               console.log(err);
             }
-            return res.send({ success: true, taskId: taskId });
+            return res.send({
+              success: true,
+              taskId: taskId
+            });
           });
         });
 
-        
+
         _scraper.on('stats', (stats) => {
           self.progress[taskId] = stats;
         });
@@ -114,38 +115,34 @@ ScraperAPI.prototype.runScraper = (req, res) => {
           // Remove from running
           console.log(data);
           delete self.progress[taskId];
-          
+
           // Save in database
-          
+
           // Send saved in db to client
 
-          
+
         });
       }
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('id params is invalid!'));
+      .send(makeError('id params is invalid!'));
   }
-}
-
-/**
- * POST /scrapers/convertFile
- */
-ScraperAPI.prototype.convertFile = (req, res) => {
-  var rar = new UnRAR('./')
 }
 
 /**
  * GET /scrapers/running
  */
 ScraperAPI.prototype.getRunningScrapers = (req, res) => {
-  Scraper.find({ running: true }, { __v: false }, (err, scrapers) => {
-    if(err) {
+  Scraper.find({
+    running: true
+  }, {
+    __v: false
+  }, (err, scrapers) => {
+    if (err) {
       return res.status(500)
-                .send(makeError(err.message,
-                                err.code));
+        .send(makeError(err.message,
+          err.code));
     }
     return res.send(makeResponse(true, scrapers));
   });
@@ -156,13 +153,15 @@ ScraperAPI.prototype.getRunningScrapers = (req, res) => {
  * Returns all scrapers in database
  */
 ScraperAPI.prototype.getScrapers = (req, res) => {
-  Scraper.find({}, { __v: false }, (err, scrapers) => {
-    if(err) {
+  Scraper.find({}, {
+    __v: false
+  }, (err, scrapers) => {
+    if (err) {
       return res.status(500)
-                .send(makeError(err.message,
-                                err.code));
+        .send(makeError(err.message,
+          err.code));
     }
-    
+
     return res.send(makeResponse(true, scrapers));
   });
 }
@@ -174,20 +173,21 @@ ScraperAPI.prototype.getScrapers = (req, res) => {
 ScraperAPI.prototype.getScraperById = (req, res) => {
 
   let id = req.params.id;
-  if(id && isNaN(id)) {
-    Scraper.findById(id, { __v: false }, (err, scraper) => {
-      if(err) {
+  if (id && isNaN(id)) {
+    Scraper.findById(id, {
+      __v: false
+    }, (err, scraper) => {
+      if (err) {
         return res.status(500)
-                  .send(makeError(err.message,
-                                  err.code));
+          .send(makeError(err.message,
+            err.code));
       }
-      
+
       return res.send(makeResponse(true, scraper));
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('id param is not valid'));
+      .send(makeError('id param is not valid'));
   }
 }
 
@@ -198,20 +198,23 @@ ScraperAPI.prototype.getScraperById = (req, res) => {
 ScraperAPI.prototype.getScraperByCity = (req, res) => {
 
   let city = req.params.id;
-  if(city && isNaN(city)) {
-    Scraper.find({ city: city }, { __v: false }, (err, scrapers) => {
-      if(err) {
+  if (city && isNaN(city)) {
+    Scraper.find({
+      city: city
+    }, {
+      __v: false
+    }, (err, scrapers) => {
+      if (err) {
         return res.status(500)
-                  .send(makeError(err.message,
-                                  err.code));
+          .send(makeError(err.message,
+            err.code));
       }
 
       return res.send(makeResponse(true, scrapers));
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('id param is not valid'));
+      .send(makeError('id param is not valid'));
   }
 }
 
@@ -220,20 +223,24 @@ ScraperAPI.prototype.getScraperByCity = (req, res) => {
  */
 ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
   let id = req.params.id;
-  if(id) {
-    Result.find({ scraper: id, approved: false }, { __v: false }, (err, pending) => {
-      if(err) {
+  if (id) {
+    Result.find({
+      scraper: id,
+      approved: false
+    }, {
+      __v: false
+    }, (err, pending) => {
+      if (err) {
         return res.status(500)
-                  .send(makeError(err.message,
-                                  err.code));
+          .send(makeError(err.message,
+            err.code));
       }
 
       return res.send(makeResponse(true, pending));
     });
-  }
-  else {
+  } else {
     return res.status(500).
-               send(makeError('id param is not valid'));
+    send(makeError('id param is not valid'));
   }
 }
 
@@ -243,12 +250,11 @@ ScraperAPI.prototype.getPendingFromScraper = (req, res) => {
 ScraperAPI.prototype.checkProgress = (req, res) => {
   let self = this;
   const id = req.params.id;
-  if(id) {
+  if (id) {
     return res.send(makeResponse(true, self.progress[id]));
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('id param is not valid!'));
+      .send(makeError('id param is not valid!'));
   }
 }
 
@@ -258,21 +264,23 @@ ScraperAPI.prototype.checkProgress = (req, res) => {
  */
 ScraperAPI.prototype.insertScraper = (req, res) => {
   const scraper = req.body;
-  if(scraper.name && scraper.city) {
-    var s = new Scraper({name: scraper.name, city: scraper.city});
+  if (scraper.name && scraper.city) {
+    var s = new Scraper({
+      name: scraper.name,
+      city: scraper.city
+    });
     s.save((err, saved) => {
-      if(err) {
+      if (err) {
         return res.status(500).
-                   send(makeError(err.message,
-                                  err.code));
+        send(makeError(err.message,
+          err.code));
       }
 
       return res.send(makeResponse(true, saved));
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('some params are invalid!'));
+      .send(makeError('some params are invalid!'));
   }
 };
 
@@ -283,20 +291,21 @@ ScraperAPI.prototype.insertScraper = (req, res) => {
 ScraperAPI.prototype.updateScraper = (req, res) => {
   const id = req.params.id;
   const scraper = req.body;
-  if(id && isNaN(id) && scraper) {
-    Scraper.update({ _id: id }, scraper, (err, raw) => {
-      if(err) {
+  if (id && isNaN(id) && scraper) {
+    Scraper.update({
+      _id: id
+    }, scraper, (err, raw) => {
+      if (err) {
         return res.status(500)
-                  .send(makeError(err.message,
-                                  err.code));
+          .send(makeError(err.message,
+            err.code));
       }
-      
+
       return res.send(makeResponse(true, raw));
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('some params are invalid!'));
+      .send(makeError('some params are invalid!'));
   }
 };
 
@@ -306,20 +315,21 @@ ScraperAPI.prototype.updateScraper = (req, res) => {
  */
 ScraperAPI.prototype.deleteScraper = (req, res) => {
   const id = req.params.id;
-  if(id && isNaN(id)) {
-    Scraper.remove({ _id: id }, (err, raw) => {
-      if(err) {
+  if (id && isNaN(id)) {
+    Scraper.remove({
+      _id: id
+    }, (err, raw) => {
+      if (err) {
         return res.status(500)
-                  .send(makeError(err.message,
-                                  err.code));
+          .send(makeError(err.message,
+            err.code));
       }
-      
+
       return res.send(makeResponse(true, raw));
     });
-  }
-  else {
+  } else {
     return res.status(500)
-              .send(makeError('some params are invalid!'));
+      .send(makeError('some params are invalid!'));
   }
 };
 
@@ -327,8 +337,13 @@ ScraperAPI.prototype.deleteScraper = (req, res) => {
  * Updates running property
  */
 function updateRunning(scraper, running, callback) {
-  Scraper.update({ _id: scraper._id }, Object.assign(scraper, { running: running, lastRunDate: new Date() }), (err, raw) => {
-    if(err) {
+  Scraper.update({
+    _id: scraper._id
+  }, Object.assign(scraper, {
+    running: running,
+    lastRunDate: new Date()
+  }), (err, raw) => {
+    if (err) {
       return callback(err);
     }
 
@@ -338,7 +353,7 @@ function updateRunning(scraper, running, callback) {
 
 /**
  * Makes a error response
- */ 
+ */
 function makeError(message, code) {
   return {
     success: false,
@@ -358,7 +373,7 @@ function makeResponse(success, data) {
     result: {}
   };
 
-  if(typeof data === 'object' && data[0]) {
+  if (typeof data === 'object' && data[0]) {
     response.result['count'] = data.length;
   }
 
@@ -369,15 +384,19 @@ function makeResponse(success, data) {
 
 // Util functions
 function findScraperIncludingLastResults(id, callback) {
-  Scraper.find({ _id: id }).lean().limit(1).exec((err, scrapers) => {
-    if(err) {
+  Scraper.find({
+    _id: id
+  }).lean().limit(1).exec((err, scrapers) => {
+    if (err) {
       return callback(err);
     }
 
     var scraper = scrapers[0];
-    if(scraper) {
-      Result.find({ scraper: scraper._id }).lean().exec((err, results) => {
-        if(err) {
+    if (scraper) {
+      Result.find({
+        scraper: scraper._id
+      }).lean().exec((err, results) => {
+        if (err) {
           return callback(err);
         }
 
@@ -386,12 +405,12 @@ function findScraperIncludingLastResults(id, callback) {
           results: {},
         };
 
-        for(var i = 0; i < results.length; ++i) {
+        for (var i = 0; i < results.length; ++i) {
           var item = results[i];
           r.ids.push(item._hash);
           r.results[item._hash] = item;
         }
-        
+
         scraper.lastResults = r;
         return callback(null, scraper);
       });

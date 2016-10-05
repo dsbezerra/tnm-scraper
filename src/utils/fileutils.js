@@ -2,7 +2,33 @@ const fs = require("fs");
 const uuid = require("node-uuid");
 
 /**
- * Get all filenames found in a given directory 
+ * Get filepath of all files inside a given path, including sub directories (optional)
+ * @param {String} path Path of directory
+ * @param {boolean} includeSubDir True if sub directories must be included, false if not
+ * @return {object} Array of file paths inside this directory
+ */
+ function getFilePathsFromDirectory(path, includeSubDir) {
+   var result = [];
+   
+   var dirContents = getFilenamesFromDirectory(path);
+   for(var content = 0; content < dirContents.length; ++content) {
+     var fullPath = path + '/' + dirContents[content];
+     if(isDirectory(fullPath) && includeSubDir) {
+       var subDirPaths = getFilePathsFromDirectory(fullPath);
+       result = result.concat(subDirPaths);
+     }
+     else if(isFile(fullPath)) {
+       result.push(fullPath);
+     }
+   }
+   
+   return result;
+ }
+
+/**
+ * Get all filenames found in a given directory
+ * @param {String} path Path of directory
+ * @return {object} Array of filenames founded inside directory
  */
 function getFilenamesFromDirectory(path) {
   var result = [];
@@ -16,6 +42,8 @@ function getFilenamesFromDirectory(path) {
 
 /**
  * Check if a given directory path is a directory 
+ * @param {String} path Path of directory to be checked
+ * @return {boolean} True if is a directory, false if not
  */
 function isDirectory(path) {
   var result = false;
@@ -29,6 +57,8 @@ function isDirectory(path) {
 
 /**
  * Check if a given file path is a file 
+ * @param {String} path Path of file to be checked
+ * @return {boolean} True if is a file, false if not
  */
 function isFile(path) {
   var result = false;
@@ -42,13 +72,17 @@ function isFile(path) {
 
 /**
  * Check if a give path exists
+ * @param {String} path Path of file or directory to be checked
+ * @return {boolean} True if exists, false if not
  */
 function exists(path) {
   return isFile(path) || isDirectory(path);
 }
 
 /**
- * Create a directory at given path
+ * Create a directory at given path (creating directories that doesn't exist)
+ * @param {String} path Path of new directory
+ * @return {undefined} Nothing
  */
 function createDirectory(path) {
   var stats = statsOf(path);
@@ -72,23 +106,78 @@ function createDirectory(path) {
   }
 }
 
-function createRandomDirectoryAt(path) {
-  var randomName = uuid.v1();
-  var finalPath = path + '/' + randomName;
+/**
+ * Create a directory in a given path
+ * @param {String} path Root path of the new directory
+ * @param {String} name Name of directory
+ * @param {boolean} random If the directory name must be random or not
+ * @return {undefined} Nothing
+ */
+function createDirectoryAt(path, name, random) {
+  var dirname = name;
+  if(random) dirname = uuid.v1();
+
+  var finalPath = path + '/' + dirname;
   fs.mkdirSync(finalPath);
   
   return {
-    id: randomName,
+    id: dirname,
     destPath: finalPath
   }
 }
 
+/**
+ * Deletes a file of give path
+ * @param {String} path Path of the file
+ * @return {undefined} Nothing
+ */
 function removeFile(path) {
   fs.unlinkSync(path);
 }
 
 /**
+ * Get name from a given path
+ * @param {String} path Path to be processed.
+ * @param {boolean} includeExt True if extension must be included and false if not
+ * @return {String} Name of file or directory
+ */ 
+function getNameFromPath(path, includeExt) {
+  var result = '';
+  
+  if(!path) return result;
+  
+  var extIndex = -1;
+  var slashIndex = -1;
+  
+  for(var i = 0; i < path.length; ++i) {
+    var c = path.charAt(i);
+    switch(c) {
+      case '/':
+        slashIndex = i;
+        break;
+      case '.':
+        extIndex = i;
+        break;
+      default:
+        break;
+    }
+  }
+  
+  if(includeExt && slashIndex > -1) {
+    result = path.substring(slashIndex + 1);
+  }
+  else {
+    if(slashIndex > -1 && extIndex > -1)
+      result = path.substring(slashIndex + 1, extIndex);
+  }
+  
+  return result;
+}
+
+/**
  * This function recursively deletes a directory.
+ * @param {String} path Path of directory
+ * @return {undefined} Nothing
  */
 function removeDirectory(path) {
   try {
@@ -123,7 +212,24 @@ function removeDirectory(path) {
 }
 
 /**
- * Get a Stats object of a file
+ * Reads a file to a buffer
+ * @param {String} path Path of file
+ * @return {object} Buffer with file contents
+ */
+function readFile(path) {
+  var result = null;
+  
+  if(isFile(path)) {
+    result = fs.readFileSync(path);
+  }
+  
+  return result;
+}
+
+/**
+ * Get a Stats object of file or directory, or other things handled by stats
+ * @param {String} path Path of file or directory
+ * @return {object} Stats object
  */
 function statsOf(path) {
   if(!path || typeof path !== 'string') {
@@ -143,11 +249,14 @@ function statsOf(path) {
 }
 
 /*** EXPORTS ***/
+exports.getFilePathsFromDirectory = getFilePathsFromDirectory;
 exports.getFilenamesFromDirectory = getFilenamesFromDirectory;
 exports.isDirectory = isDirectory;
 exports.isFile = isFile;
 exports.createDirectory = createDirectory;
-exports.createRandomDirectoryAt = createRandomDirectoryAt;
+exports.createDirectoryAt = createDirectoryAt;
 exports.removeFile = removeFile;
+exports.getNameFromPath = getNameFromPath;
 exports.removeDirectory = removeDirectory;
+exports.readFile = readFile;
 exports.exists = exists;
