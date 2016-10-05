@@ -42,7 +42,6 @@ var LogLevel = {
 
 var logLevel = LogLevel.warn;
 
-
 function Logger(options) {
   var self = this;
 
