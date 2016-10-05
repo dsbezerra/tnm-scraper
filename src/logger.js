@@ -70,7 +70,7 @@ function Logger(options) {
     fileName += 'log';
   }
   
-  var logFilePath = path.join('../logs', fileName + '.log');
+  var logFilePath = path.resolve('../logs/' + fileName + '.log');
   
   self.logWriter;
   self.logWriter = fs.createWriteStream(logFilePath, {
