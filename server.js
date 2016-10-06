@@ -84,6 +84,8 @@ app.get('/scrapers/checkProgress/:id', scraperApi.checkProgress);
 // endpoint - /files/process
 app.post('/files/process', FilesController.process);
 
+app.post('/files/checkProgress', FilesController.checkProgress);
+
 // Inserts a scraper
 app.post('/scrapers', scraperApi.insertScraper);
 
