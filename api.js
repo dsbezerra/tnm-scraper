@@ -18,7 +18,7 @@ var networkutils = require('./src/utils/networkutils');
 var scrape = require('./index');
 
 function ScraperAPI() {
-  let self = this;
+  var self = this;
 
   self.progress = null;
 
@@ -26,7 +26,7 @@ function ScraperAPI() {
 }
 
 ScraperAPI.prototype.init = function() {
-  let self = this;
+  var self = this;
   var db = secrets.db;
 
   var uri = `mongodb://${db.user}:${db.pwd}@${db.host}:${db.port}/${db.name}`;
@@ -48,7 +48,7 @@ ScraperAPI.prototype.init = function() {
  */
 ScraperAPI.prototype.runScraper = function(req, res) {
 
-  let self = this;
+  var self = this;
 
   var id = req.body.id;
   var taskId = uuid.v1();
@@ -166,7 +166,7 @@ ScraperAPI.prototype.getScrapers = function(req, res) {
  */
 ScraperAPI.prototype.getScraperById = function(req, res) {
 
-  let id = req.params.id;
+  var id = req.params.id;
   if (id && isNaN(id)) {
     Scraper.findById(id, {
       __v: false
@@ -191,7 +191,7 @@ ScraperAPI.prototype.getScraperById = function(req, res) {
  */
 ScraperAPI.prototype.getScraperByCity = function(req, res) {
 
-  let city = req.params.id;
+  var city = req.params.id;
   if (city && isNaN(city)) {
     Scraper.find({
       city: city
@@ -216,7 +216,7 @@ ScraperAPI.prototype.getScraperByCity = function(req, res) {
  * GET /scrapers/pending/:id
  */
 ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
-  let id = req.params.id;
+  var id = req.params.id;
   if (id) {
     Result.find({
       scraper: id,
@@ -242,7 +242,7 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
  * GET /scrapers/checkProgres/:id
  */
 ScraperAPI.prototype.checkProgress = function(req, res) {
-  let self = this;
+  var self = this;
   var id = req.params.id;
   if (id) {
     return res.send(makeResponse(true, self.progress[id]));
@@ -362,7 +362,7 @@ function makeError(message, code) {
  * Makes a reponse object
  */
 function makeResponse(success, data) {
-  let response = {
+  var response = {
     success,
     result: {}
   };
