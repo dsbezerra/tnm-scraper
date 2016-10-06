@@ -1,11 +1,11 @@
 'use strict';
 
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-const Scraper = require('./scraper');
+var Scraper = require('./scraper');
 
-const result = new Schema({
+var result = new Schema({
   scraper: { type: Schema.ObjectId, ref: 'Scraper' },
   _hash: String,
   modality: Number,

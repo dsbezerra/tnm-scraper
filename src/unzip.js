@@ -1,18 +1,20 @@
-const uuid = require('node-uuid');
-const fs = require('fs');
-const path = require('path');
-const child_process = require('child_process');
-const exec = child_process.exec;
-const spawnSync = child_process.spawnSync;
+'use strict'
 
-const fileutils = require('./utils/fileutils');
+var uuid = require('node-uuid');
+var fs = require('fs');
+var path = require('path');
+var child_process = require('child_process');
+var exec = child_process.exec;
+var spawnSync = child_process.spawnSync;
+
+var fileutils = require('./utils/fileutils');
 
 /**
  * Wrapper for command-line unzip
  */
 
-const CURRENT_WORKING_DIR = process.cwd() + '/';
-const TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
+var CURRENT_WORKING_DIR = process.cwd() + '/';
+var TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
 
 function UnZIP(path) {
 
@@ -35,7 +37,7 @@ function UnZIP(path) {
   if (!fileutils.exists(TMP_PATH))
     fileutils.createDirectory(TMP_PATH);
     
-  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 0o777);
+  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 777);
 
   return self;
 }
@@ -54,11 +56,11 @@ UnZIP.prototype.extract = function(callback) {
     
     var name = fileutils.getNameFromPath(self.filePath);
     var result = fileutils.createDirectoryAt(TMP_PATH, name, false);
-
-    const COMMAND = `unzip ${self.filePath} -d ${result.destPath}`;
+	
+	var COMMAND = 'unzip ' + self.filePath + ' -d ' + result.destPath;
     var child = exec(COMMAND, function(error, stdout, stderr) {
       if (error) {
-        console.error(`exec error: ${error}`);
+        console.error('exec error: ' + error);
         return callback(error);
       }
     });
@@ -72,7 +74,7 @@ UnZIP.prototype.extract = function(callback) {
         // Success
         case 0:
           {
-            const filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+            var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
             result.filepaths = filepaths;
             return callback(null, result);
           }
@@ -99,7 +101,7 @@ UnZIP.prototype.extractSync = function(callback) {
 
     if (child.status === 0) {
       console.log('Success!');
-      const filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+      var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
       result.filepaths = filepaths;
       return result;
     } else {

@@ -1,3 +1,4 @@
+#!/bin/env node
 const express      = require('express');
 const bodyParser   = require('body-parser');
 const compression  = require('compression');
@@ -10,10 +11,8 @@ const ScraperAPI = require('./api');
 
 const app = express();
 
-var ip = process.env.IP || '0.0.0.0';
-var port = process.env.PORT || 80;
-
-app.set('port', port);
+var ip = process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '0.0.0.0';
+var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080;
 
 // Middlewares
 app.use(compression());
@@ -21,10 +20,9 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(logger('dev'));
 
-
 const scraperApi = new ScraperAPI();
 
-app.get('/', (req, res) => {
+app.get('/', function(req, res) {
   res.send('Cobol!');
 });
 
@@ -98,6 +96,6 @@ app.put('/scrapers/:id', scraperApi.updateScraper);
 // Delete a scraper
 app.delete('/scrapers/:id', scraperApi.deleteScraper);
 
-app.listen(app.get('port'), () => {
+app.listen(ip, port, function() {
   console.log('Server started listening...');
 });

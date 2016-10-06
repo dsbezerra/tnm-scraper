@@ -20,13 +20,13 @@ if(FROM_DB) {
   const uri =
     `mongodb://${user}:${pwd}@localhost:27017/tnm`;
   
-  mongoose.connect(uri, (err) => {
+  mongoose.connect(uri, function(err) {
     if(err) {
       console.log(err);
       return;
     }
 
-    findScraperIncludingLastResults('57db1f6d8bc35e17001fc0b5', (err, scraper) => {
+    findScraperIncludingLastResults('57db1f6d8bc35e17001fc0b5', function(err, scraper) {
       if(err) return;
       
       var scraperPath = path.join('scrapers', scraper._id + '.json');
@@ -84,7 +84,7 @@ function handleResult(err, scraper, results) {
       results[i].ignored = false;
     }
     
-    Result.collection.insert(results, (err, result) => {
+    Result.collection.insert(results, function(err, result) {
       if(err) {
         console.log(err);
       }
@@ -100,14 +100,14 @@ function handleResult(err, scraper, results) {
 }
 
 function findScraperIncludingLastResults(id, callback) {
-  Scraper.find({ _id: id }).lean().limit(1).exec((err, scrapers) => {
+  Scraper.find({ _id: id }).lean().limit(1).exec(function(err, scrapers) {
     if(err) {
       return callback(err);
     }
 
     var scraper = scrapers[0];
     if(scraper) {
-      Result.find({ scraper: scraper._id }).lean().exec((err, results) => {
+      Result.find({ scraper: scraper._id }).lean().exec(function(err, results) {
         if(err) {
           return callback(err);
         }

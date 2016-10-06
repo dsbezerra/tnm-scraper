@@ -1,9 +1,9 @@
 'use strict';
 
-const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+var mongoose = require('mongoose');
+var Schema = mongoose.Schema;
 
-const MODALITY = {
+var MODALITY = {
   PREGAO_PRESENCIAL:  0,
   PREGAO_ELETRONICO:  1,
   CONCORRENCIA:       2,
@@ -13,7 +13,7 @@ const MODALITY = {
   TOMADA_PRECO:       6, 
 };
 
-const Scraper = new Schema({
+var Scraper = new Schema({
   name: String,
   city: String,
   running: { type: Boolean, default: false },

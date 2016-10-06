@@ -34,7 +34,7 @@ var RESULT_CODE = {
 /**
  * Process a file and convert to pdf or uncompress
  */
-exports.process = (req, res) => {
+exports.process = function(req, res) {
   var body = req.body;
 
   if (body) {
@@ -249,7 +249,7 @@ exports.process = (req, res) => {
   }
 }
 
-exports.checkProgress = (req, res) => {
+exports.checkProgress = function(req, res) {
   if(req.body) {
     var id = req.body.id;
     var response = tasksProgress[id];

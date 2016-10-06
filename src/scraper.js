@@ -553,7 +553,7 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   // NOTE(diego): We assume here, that if the first link doesn't need to be resolved,
   // the remaining links doesn't need too;
   //
-  const firstLink = contents[contentIndex].link;
+  var firstLink = contents[contentIndex].link;
   if(!isUriValid(firstLink)) {
     async.whilst(
       function() { return contentIndex < contents.length; },

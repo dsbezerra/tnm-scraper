@@ -1,13 +1,13 @@
 'use strict'
 
-const assert = require('assert');
-const mongoose = require('mongoose');
+var assert = require('assert');
+var mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
 
 describe('Detect new items', () => {
 
-  const mockList = [
+  var mockList = [
     { modality: 0, description: 'Este é um item de teste hahaha, inútil, sqn :P', date: '10/06/2016' },
     { modality: 3, description: 'Outro inútil hahah', date: '10/07/2016' },
     { modality: 1, description: 'Aff...', date: '10/05/2016' },
@@ -15,7 +15,7 @@ describe('Detect new items', () => {
     { modality: 0, description: 'O último inútil da lista.', date: "20/08/2016" }
   ];
 
-  const lastItemsInDatabase = [
+  var lastItemsInDatabase = [
     {
       modality: 0,
       description: 'Este é o último item salvo.',
@@ -30,15 +30,15 @@ describe('Detect new items', () => {
 
   describe('New items above', () => {
     it('should have 2 new items at top', () => {
-      const testList = [
+      var testList = [
         mockList[0],
         mockList[4],
         lastItemsInDatabase[0],
         lastItemsInDatabase[1]
       ];
 
-      const lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
-      const { first, second } = lastItemsInDatabase;
+      var lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
+      var { first, second } = lastItemsInDatabase;
       if(Math.abs(second - first) === 1 && first !== 0) {
         
         // Copy list
@@ -55,17 +55,17 @@ describe('Detect new items', () => {
 
   describe('New items between', () => {
     it('should have 2 new items between the last two in database', () => {
-      const testList = [
+      var testList = [
         lastItemsInDatabase[0],
         mockList[1],
         mockList[0],
         lastItemsInDatabase[1]
       ];
 
-      const lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
-      const { first, second } = lastSavedItemsIndex;
+      var lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
+      var { first, second } = lastSavedItemsIndex;
 
-      const diff = Math.abs(second - first) - 1;
+      var diff = Math.abs(second - first) - 1;
       if(diff !== 1 && first === 0) {
         let newList = [...testList];
         newList = newList.splice(first + 1, diff);
@@ -78,7 +78,7 @@ describe('Detect new items', () => {
 
   describe('New items between and at top', () => {
     it('should have 4 new items, 2 between the last two in databse and 2 at top', () => {
-      const testList = [
+      var testList = [
         mockList[0],
         mockList[3],
         lastItemsInDatabase[0],
@@ -87,15 +87,15 @@ describe('Detect new items', () => {
         lastItemsInDatabase[1],
       ];
 
-      const lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
-      const { first, second } = lastSavedItemsIndex;
-      const diff = Math.abs(second - first) - 1;
+      var lastSavedItemsIndex = getIndexes(testList, lastItemsInDatabase);
+      var { first, second } = lastSavedItemsIndex;
+      var diff = Math.abs(second - first) - 1;
       if(diff !== 1 && first !== 0) {
 
-        const topItems = [...testList].splice(0, first);
-        const betweenItems = [...testList].splice(first + 1, diff);
+        var topItems = [...testList].splice(0, first);
+        var betweenItems = [...testList].splice(first + 1, diff);
 
-        const newList = topItems.concat(betweenItems);
+        var newList = topItems.concat(betweenItems);
 
         // top items
         assert.equal(true, isEqual(newList[0], testList[0]));
