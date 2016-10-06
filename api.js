@@ -29,7 +29,10 @@ ScraperAPI.prototype.init = function() {
   var self = this;
   var db = secrets.db;
 
-  var uri = `mongodb://${db.user}:${db.pwd}@${db.host}:${db.port}/${db.name}`;
+  var uri = 'mongodb://' + 
+	db.user + ':' + db.pwd + '@' + db.host + ':' + 
+	db.port + '/' + db.name;
+	
   if (process.env.MONGODB_URI) {
     uri = process.env.MONGODB_URI;
   }
