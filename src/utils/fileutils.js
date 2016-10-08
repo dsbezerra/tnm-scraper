@@ -2,6 +2,8 @@ const fs = require("fs");
 const uuid = require("node-uuid");
 const encoding = require("encoding");
 
+removeDirectory('../../data/extracted_tmp/775391a0-8d7e-11e6-8903-f9ec390f2568.1');
+
 /**
  * Get filepath of all files inside a given path, including sub directories (optional)
  * @param {String} path Path of directory
@@ -202,23 +204,22 @@ function removeDirectory(path) {
           filenames.forEach(function(filename) {
             const newPath = path + '/' + filename;
             if(isDirectory(newPath)) {
-              removeDirectory(newPath);
+              return removeDirectory(newPath);
             }
             else if(isFile(newPath)) {
               removeFile(newPath);
             }
           });
-          
-          // After delete all files and directory inside the parent,
-          // delete parent.
-          fs.rmdirSync(path);
-          
         } break;
         
         default: 
           console.log(e);
       }
     }
+    
+    // After delete all files and directory inside the parent,
+    // delete parent.
+    fs.rmdirSync(path);
 }
 
 /**
