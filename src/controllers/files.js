@@ -1,12 +1,19 @@
 var cheerio = require('cheerio');
-var fetch = require('node-fetch');
 var uuid = require('node-uuid');
 var _ = require('lodash');
+var objectAssign = require('object-assign');
 
 var fileutils = require('../utils/fileutils');
 var networkutils = require('../utils/networkutils');
 var Decompressor = require('../decompressor');
 var FtpUploader = require('../network/ftpuploader');
+
+require('es6-promise').polyfill();
+require('isomorphic-fetch');
+
+var CURRENT_WORKING_DIR = process.cwd() + '/';
+var DATA_DIR = CURRENT_WORKING_DIR + 'data/';						  
+var TMP_DIR = DATA_DIR + 'extracted_tmp/';
 
 var tasksProgress = {};
 
@@ -41,7 +48,8 @@ exports.process = function(req, res) {
     var id = body.id,
       uri = body.uri,
       filename = body.filename,
-      format = body.format;
+      format = body.format,
+	  fileIndex = body.fileIndex;
 
     var taskId = uuid.v1();
 
@@ -58,8 +66,8 @@ exports.process = function(req, res) {
     // If we have a link download first
     if (uri && format) {
 
-      var randomName = uuid.v1() + '.' + format;
-      var destPath = './data/' + randomName;
+      var randomName = uuid.v1();
+      var destPath = DATA_DIR + randomName + '.' + format;
 
       updateTask(taskId, {
         message: 'Baixando arquivo...'
@@ -71,6 +79,7 @@ exports.process = function(req, res) {
             running: false,
             code: RESULT_CODE.ERROR_DOWNLOAD
           });
+		  return;
         }
 
         updateTask(taskId, {
@@ -110,29 +119,34 @@ exports.process = function(req, res) {
               });
             }
           });
-        } else if (isWordDocument(format)) {
+        } 
+		else if (isWordDocument(format)) {
           updateTask(taskId, {
             message: 'Convertendo para PDF...'
           });
           convertToPDF(destPath, function(err, file) {
-            if (err)
+            if (err) {
+			  console.log(err);
               updateTask(taskId, {
                 running: false,
                 code: RESULT_CODE.ERROR_CONVERT_PDF,
                 message: 'Falha ao converter para PDF!'
               });
+			}
             else {
               updateTask(taskId, {
                 code: RESULT_CODE.SUCCESS_CONVERT_PDF,
                 message: 'Upando para o hostgator...'
               });
               uploadToHostgator(file, function(err, result) {
-                if (err)
+                if (err) {
+				  console.log(err);
                   updateTask(taskId, {
                     running: false,
                     code: RESULT_CODE.ERROR_UPLOAD_FTP,
                     message: 'Falha ao enviar para o Hostgator!'
                   });
+				}
                 else {
                   fileutils.removeFile(destPath);
                   updateTask(taskId, {
@@ -156,32 +170,36 @@ exports.process = function(req, res) {
       });
     }
     // If we already have this file extracted
-    else if (id && filename && format) {
-      var path = 'data/extracted_tmp/' + id + '/' + filename + '.' + format;
+    else if (id && filename && format && fileIndex) {
+	  var filepaths = fileutils.getFilePathsFromDirectory(TMP_DIR + id, true);
+      var path = filepaths[fileIndex];
       if (isWordDocument(format)) {
         updateTask(taskId, {
           code: RESULT_CODE.NONE,
           message: 'Convertendo para PDF...'
         });
         convertToPDF(path, function(err, file) {
-          if (err)
-            updateTask(taskId, {
+          if (err) {
+            console.log(err);
+			updateTask(taskId, {
               running: false,
               code: RESULT_CODE.ERROR_CONVERT_PDF,
               message: 'Falha ao converter para PDF!'
             });
+		  }
           else {
             updateTask(taskId, {
               code: RESULT_CODE.SUCCESS_CONVERT_PDF,
               message: 'Upando para o hostgator...'
             });
             uploadToHostgator(file, function(err, result) {
-              if (err)
+              if (err) {
                 updateTask(taskId, {
                   running: false,
                   code: RESULT_CODE.ERROR_UPLOAD_FTP,
                   message: 'Falha ao enviar para o Hostgator!'
                 });
+			  }
               else {
                 fileutils.removeDirectory('data/extracted_tmp/' + id);
                 updateTask(taskId, {
@@ -195,7 +213,7 @@ exports.process = function(req, res) {
           }
         });
       } else if (isPDFDocument(format)) {
-        var path = 'data/extracted_tmp/' + id + '/' + filename + '.' + format;
+        var path = TMP_DIR + id + '/' + filename;
         var buffer = fileutils.readFile(path);
         if (buffer) {
           var file = {
@@ -214,7 +232,7 @@ exports.process = function(req, res) {
                 message: 'Falha ao enviar para o Hostgator!'
               });
             else {
-              fileutils.removeDirectory('data/extracted_tmp/' + id);
+              fileutils.removeDirectory(TMP_DIR + id);
               updateTask(taskId, {
                 running: false,
                 code: RESULT_CODE.SUCCESS_UPLOAD_FTP,
@@ -281,13 +299,15 @@ function uploadToHostgator(file, callback) {
   
   const HOSTGATOR_FOLDER_NAME =
                    process.env.NODE_ENV === 'production' ? 'editais' : 'stream';
-  
-  ftpUploader.put(file, HOSTGATOR_FOLDER_NAME, function(err, result) {
-    if(err) return callback(err);
-    else {
-      return callback(null, result);
-    }
-  });
+				   
+	ftpUploader.client.on('ready', function() {
+	  ftpUploader.put(file, HOSTGATOR_FOLDER_NAME, function(err, result) {
+	    if(err) return callback(err);
+	    else {
+	      return callback(null, result);
+	    }	
+	  });
+	});
 }
 
 function convertToPDF(filepath, callback) {
@@ -304,6 +324,9 @@ function convertToPDF(filepath, callback) {
 
       var buffer = fileutils.readFile(filepath);
       var filename = fileutils.getNameFromPath(filepath, false);
+	  
+	  console.log(buffer);
+	  console.log(filename);
 
       if (buffer && filename) {
         var $ = cheerio.load(body);
@@ -376,6 +399,6 @@ function isPDFDocument(format) {
 }
 
 function updateTask(taskId, data) {
-  tasksProgress[taskId] = Object.assign(tasksProgress[taskId] ? 
+  tasksProgress[taskId] = objectAssign(tasksProgress[taskId] ? 
                                         tasksProgress[taskId] : {}, data);
 } 

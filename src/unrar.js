@@ -14,8 +14,9 @@ var fileutils = require('./utils/fileutils');
  */
 
 var CURRENT_WORKING_DIR = process.cwd() + '/';
+var DATA_DIR = CURRENT_WORKING_DIR + 'data/';						  
+var TMP_DIR = DATA_DIR + 'extracted_tmp/';
 var UNRAR_PATH = CURRENT_WORKING_DIR + 'thirdparty/rar/unrar';
-var TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
 
 function UnRAR(path) {
 
@@ -27,19 +28,20 @@ function UnRAR(path) {
     throw new Error('Path must be a string!');
   }
 
-  if (!path.toLowerCase().endsWith('.rar')) {
+  if (!endsWith(path.toLowerCase(), '.rar')) {
     throw new Error('Invalid file format!');
   }
 
   var self = this;
 
-  self.filePath = CURRENT_WORKING_DIR + path;
+  self.filePath = path;
 
-  if (!fileutils.exists(TMP_PATH))
-    fileutils.createDirectory(TMP_PATH);
+  if (!fileutils.exists(TMP_DIR))
+    fileutils.createDirectory(TMP_DIR);
 
-  fs.chmodSync(UNRAR_PATH, 777);
-  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 777);
+  /*fs.chmodSync(UNRAR_PATH, 777);
+  fs.chmodSync(DATA_DIR, 777);
+  fs.chmodSync(TMP_DIR, 777);*/
 
   return self;
 }
@@ -58,7 +60,7 @@ UnRAR.prototype.extract = function(callback) {
   if (self.filePath) {
 
     var name = fileutils.getNameFromPath(self.filePath);
-    var result = fileutils.createDirectoryAt(TMP_PATH, name, false);
+    var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
 
 	var COMMAND = 'e -ai ' + self.filePath + ' ' + result.destPath;
     var child = exec(UNRAR_PATH + COMMAND, function(error, stdout, stderr) {
@@ -77,7 +79,12 @@ UnRAR.prototype.extract = function(callback) {
         // Success
         case 0:
           {
-            var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+            var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
+			for(var i = 0; i < filepaths.length; ++i) {
+			  var newPath = encoding.convert(filepaths[i], "Latin_1");
+		      fileutils.renameFile(filepaths[i], newPath);
+		      fileutils[i] = newPath;
+	        }
             result.filepaths = filepaths;
             return callback(null, result);
           }
@@ -99,20 +106,29 @@ UnRAR.prototype.extractSync = function() {
 
   if (self.filePath) {
     var name = fileutils.getNameFromPath(self.filePath);
-    var result = fileutils.createDirectoryAt(TMP_PATH, name, false);
+    var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
     var child = spawnSync(UNRAR_PATH, ['e', '-ai', self.filePath, result.destPath]);
     
     fileutils.removeFile(self.filePath);
 
     if (child.status === 0) {
       console.log('Success!');
-      var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+      var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
+	  for(var i = 0; i < filepaths.length; ++i) {
+	    var newPath = encoding.convert(filepaths[i], "Latin_1");
+		fileutils.renameFile(filepaths[i], newPath);
+		fileutils[i] = newPath;
+	  }
       result.filepaths = filepaths;
       return result;
     } else {
       console.log(child.stdout);
     }
   }
+}
+
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
 }
 
 module.exports = UnRAR;

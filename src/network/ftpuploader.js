@@ -19,7 +19,7 @@ function FtpUploader(options) {
   }
 
   self.options = options;
-  self.ftpClient = null;
+  self.client = null;
   
   return self.init(options);
 }
@@ -28,15 +28,9 @@ FtpUploader.prototype.init = function(options) {
 
   var self = this;
   
-  self.ftpClient = new ftpClient();
-
-  var client = self.ftpClient;
-  
-  client.on('ready', function() {
-    return client;
-  });
-
-  client.connect(options.credentials);
+  self.client = new ftpClient();
+  self.client.connect(options.credentials);
+  return self;
 }
 
 FtpUploader.prototype.put = function(file, path, callback) {
@@ -56,7 +50,7 @@ FtpUploader.prototype.put = function(file, path, callback) {
     return callback(new Error('File data is invalid!'));
   }
 
-  var client = self.ftpClient;
+  var client = self.client;
 
   var fileName = file.name;
   var fileFormat = file.format;
@@ -65,7 +59,7 @@ FtpUploader.prototype.put = function(file, path, callback) {
     fileName = uid2(32) + '.' + fileFormat;
   }  
 
-  if(path.endsWith('/')) {
+  if(endsWith(path, '/')) {
     path += fileName;
   }
   else {
@@ -77,17 +71,18 @@ FtpUploader.prototype.put = function(file, path, callback) {
       client.end();
 
       return callback(null, {
-        success: true,
-        data: {
-          fileName: fileName,
-          fileFormat: fileFormat,
-          fileUri: self.rootUri + path
-        }
+        fileName: fileName,
+        fileFormat: fileFormat,
+        uri: self.rootUri + path
       });
     }
 
     return callback(new Error('Oops.. something is wrong...'));
   });
+}
+
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
 }
 
 module.exports = FtpUploader;

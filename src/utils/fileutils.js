@@ -12,12 +12,12 @@ const uuid = require("node-uuid");
    
    var dirContents = getFilenamesFromDirectory(path);
    for(var content = 0; content < dirContents.length; ++content) {
-     var fullPath = path + '/' + dirContents[content];
+     var fullPath = path + '/' + dirContents[content]; 
      if(isDirectory(fullPath) && includeSubDir) {
-       var subDirPaths = getFilePathsFromDirectory(fullPath);
+       var subDirPaths = getFilePathsFromDirectory(fullPath, includeSubDir);
        result = result.concat(subDirPaths);
      }
-     else if(isFile(fullPath)) {
+     else {
        result.push(fullPath);
      }
    }
@@ -66,7 +66,9 @@ function isFile(path) {
   
   if(stats)
     result = stats.isFile();
-  
+  else 
+	console.log(path);
+
   return result;
 }
 
@@ -117,7 +119,14 @@ function createDirectoryAt(path, name, random) {
   var dirname = name;
   if(random) dirname = uuid.v1();
 
-  var finalPath = path + '/' + dirname;
+  var finalPath = path;
+  if(endsWith(path, '/')) {
+	  finalPath += dirname;
+  }
+  else {
+	  finalPath += '/' + dirname;
+  }
+  
   fs.mkdirSync(finalPath);
   
   return {
@@ -226,15 +235,19 @@ function readFile(path) {
   return result;
 }
 
+function renameFile(oldPath, newPath) {
+	fs.renameSync(oldPath, newPath);
+}
+
 /**
  * Get a Stats object of file or directory, or other things handled by stats
  * @param {String} path Path of file or directory
  * @return {object} Stats object
  */
 function statsOf(path) {
-  if(!path || typeof path !== 'string') {
+  /*if(!path || typeof path !== 'string' || typeof path !== 'object') {
     throw new Error('Path argument is invalid, must a valid string!');
-  }
+  }*/
   
   var stats;
   
@@ -248,6 +261,10 @@ function statsOf(path) {
   return stats;
 }
 
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
+}
+
 /*** EXPORTS ***/
 exports.getFilePathsFromDirectory = getFilePathsFromDirectory;
 exports.getFilenamesFromDirectory = getFilenamesFromDirectory;
@@ -259,4 +276,5 @@ exports.removeFile = removeFile;
 exports.getNameFromPath = getNameFromPath;
 exports.removeDirectory = removeDirectory;
 exports.readFile = readFile;
+exports.renameFile = renameFile;
 exports.exists = exists;

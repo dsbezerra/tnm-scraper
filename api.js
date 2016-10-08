@@ -7,7 +7,7 @@ var path = require('path');
 var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
-mongoose.Promise = global.Promise;
+var objectAssign = require('object-assign');
 
 var Scraper = require('./src/models/scraper');
 var Result = require('./src/models/result');
@@ -20,7 +20,7 @@ var scrape = require('./index');
 function ScraperAPI() {
   var self = this;
 
-  self.progress = null;
+  self.progress = {};
 
   self.init();
 }
@@ -282,7 +282,7 @@ ScraperAPI.prototype.insertScraper = function(req, res) {
 };
 
 /**
- * UPDATE /scrapers/:id
+ * PUT /scrapers/:id
  * Update a scraper in database
  */
 ScraperAPI.prototype.updateScraper = function(req, res) {
@@ -331,12 +331,37 @@ ScraperAPI.prototype.deleteScraper = function(req, res) {
 };
 
 /**
+ * PUT /results/:id
+ * Update a result in database
+ */
+ScraperAPI.prototype.updateResultById = function(req, res) {
+  var id = req.params.id;
+  var result = req.body;
+  if (id && isNaN(id) && result) {
+    Result.update({
+      _id: id
+    }, result, function(err, raw) {
+      if (err) {
+        return res.status(500)
+          .send(makeError(err.message,
+            err.code));
+      }
+
+      return res.send(makeResponse(true, raw));
+    });
+  } else {
+    return res.status(500)
+      .send(makeError('some params are invalid!'));
+  }
+}
+
+/**
  * Updates running property
  */
 function updateRunning(scraper, running, callback) {
   Scraper.update({
     _id: scraper._id
-  }, Object.assign(scraper, {
+  }, objectAssign(scraper, {
     running: running,
     lastRunDate: new Date()
   }), function(err, raw) {
@@ -366,7 +391,7 @@ function makeError(message, code) {
  */
 function makeResponse(success, data) {
   var response = {
-    success,
+    success: success,
     result: {}
   };
 

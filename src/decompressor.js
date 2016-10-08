@@ -16,16 +16,14 @@ function Decompressor(path) {
   self.decompressed = null;
 
   self.init(path);
-
-  return self;
 }
 
 Decompressor.prototype.init = function(path) {
   var self = this;
 
-  if (path.endsWith('.zip'))
+  if (endsWith(path, '.zip'))
     self.extension = 'zip';
-  else if (path.endsWith('.rar'))
+  else if (endsWith(path, '.rar'))
     self.extension = 'rar';
   else
     throw new Error('Invalid file extension!');
@@ -91,6 +89,10 @@ Decompressor.prototype.getDecompressed = function() {
  */
 Decompressor.prototype.setPath = function(path) {
   if(path) this.init(path);
+}
+
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
 }
 
 module.exports = Decompressor;

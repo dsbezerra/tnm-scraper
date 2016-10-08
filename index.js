@@ -2,6 +2,8 @@ var scraper = require('./src/scraper'),
     fs = require('fs'),
     path = require('path');
 
+var objectAssign = require('object-assign');
+
 var defaultEnconding = 'utf-8';
 
 function scrape(config, options, callback) {
@@ -16,7 +18,7 @@ function scrape(config, options, callback) {
   
   var _config = parseConfig(config);
   // Append options and callback to config
-  _config = Object.assign(_config, options);
+  _config = objectAssign(_config, options);
   if(config.scraper) {
     _config.scraper = config.scraper;
   }

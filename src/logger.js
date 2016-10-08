@@ -76,7 +76,7 @@ function Logger(options) {
     flags: 'w',
     defaultEncoding: 'utf8',
     fd: null,
-    mode: 0o666,
+    mode: 666,
     autoClose: true
   });
 }
@@ -97,7 +97,7 @@ function getTimestamp(options) {
   var minutes = addZero(now.getMinutes());
   var seconds = addZero(now.getSeconds());
 
-  return `${hours}:${minutes}:${seconds}`;
+  return hours + ':' + minutes + ':' + seconds;
 }
 
 function addZero(i) {
@@ -114,7 +114,7 @@ function isLoggable(level) {
 
 function printArray(array, color) {
   for (var i = 0; i < array.length; ++i) {
-    console.log(colors[color](`Item ${i + 1}: ${array[i]}`));
+	console.log(colors[color]('Item ' + (i + 1) + ': ' + array[i]));
   }  
 }
 
@@ -139,8 +139,7 @@ function printObject(object, color) {
             value = value.substring(0, 47) + '...';
           }
         }
-        console.log('\t\t' + colors[color](`(${key}, ${value})`));
-        
+		console.log('\t\t' + colors[colors]('(' + key + ', ' + value + ')'));
       }
     }
 }
@@ -169,11 +168,11 @@ Logger.prototype.print = function(tag, message, LogLevel, data) {
   var timestamp = getTimestamp();
 
   var levelName = LogLevel.name;
-  var log = `[ ${timestamp} ] `;
-  log += `(${levelName})`;
+  var log = '[ ' + timestamp + ' ] ';
+  log += '(' +  levelName + ')';
   
   if(tag) {
-    log += `\t- ${tag}: `;
+	log += '\t- ' + tag + ': ';
   }
 
   log += message;

@@ -96,6 +96,9 @@ app.put('/scrapers/:id', scraperApi.updateScraper);
 // Delete a scraper
 app.delete('/scrapers/:id', scraperApi.deleteScraper);
 
-app.listen(ip, port, function() {
+// Updates a result
+app.put('/results/:id', scraperApi.updateResultById);
+
+app.listen(port, ip, function() {
   console.log('Server started listening...');
 });

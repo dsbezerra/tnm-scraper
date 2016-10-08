@@ -7,6 +7,8 @@ var child_process = require('child_process');
 var exec = child_process.exec;
 var spawnSync = child_process.spawnSync;
 
+var encoding = require("encoding");
+
 var fileutils = require('./utils/fileutils');
 
 /**
@@ -14,8 +16,9 @@ var fileutils = require('./utils/fileutils');
  */
 
 var CURRENT_WORKING_DIR = process.cwd() + '/';
-var TMP_PATH = CURRENT_WORKING_DIR + 'data/extracted_tmp';
-
+var DATA_DIR = CURRENT_WORKING_DIR + 'data/';						  
+var TMP_DIR = DATA_DIR + 'extracted_tmp/';
+											  
 function UnZIP(path) {
 
   if (!path) {
@@ -26,25 +29,27 @@ function UnZIP(path) {
     throw new Error('Path must be a string!');
   }
 
-  if (!path.toLowerCase().endsWith('.zip')) {
+  if (!endsWith(path.toLowerCase(), '.zip')) {
     throw new Error('Invalid file format!');
   }
 
   var self = this;
 
-  self.filePath = CURRENT_WORKING_DIR + path;
+  
+  self.filePath = path;
 
-  if (!fileutils.exists(TMP_PATH))
-    fileutils.createDirectory(TMP_PATH);
-    
-  fs.chmodSync(CURRENT_WORKING_DIR + 'data', 777);
+  if (!fileutils.exists(TMP_DIR))
+    fileutils.createDirectory(TMP_DIR);
+  
+  /*fs.chmodSync(DATA_DIR, 777);
+  fs.chmodSync(TMP_DIR, 777);*/
 
   return self;
 }
 
 /**
  * Extracts all contents inside .zip file to a random destination path
- * COMMAND > unzip file_path -d dest_path
+ * COMMAND > unzip -UU file_path -d dest_path
  * filePath   - Zip file path
  * -d         - Used to define an destination directory
  * dest_path  - Destination path of extracted files
@@ -55,7 +60,7 @@ UnZIP.prototype.extract = function(callback) {
   if (self.filePath) {
     
     var name = fileutils.getNameFromPath(self.filePath);
-    var result = fileutils.createDirectoryAt(TMP_PATH, name, false);
+    var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
 	
 	var COMMAND = 'unzip ' + self.filePath + ' -d ' + result.destPath;
     var child = exec(COMMAND, function(error, stdout, stderr) {
@@ -74,7 +79,12 @@ UnZIP.prototype.extract = function(callback) {
         // Success
         case 0:
           {
-            var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+            var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
+			for(var i = 0; i < filepaths.length; ++i) {
+				var newPath = encoding.convert(filepaths[i], "Latin_1");
+				fileutils.renameFile(filepaths[i], newPath);
+				fileutils[i] = newPath;
+			}
             result.filepaths = filepaths;
             return callback(null, result);
           }
@@ -94,20 +104,29 @@ UnZIP.prototype.extractSync = function(callback) {
 
   if (self.filePath) {
     var name = fileutils.getNameFromPath(self.filePath);
-    var result = fileutils.createDirectoryAt(TMP_PATH, name, false);
+    var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
     var child = spawnSync('unzip', [self.filePath, '-d', result.destPath]);
 
     fileutils.removeFile(self.filePath);
 
     if (child.status === 0) {
       console.log('Success!');
-      var filepaths = fileutils.getFilePathsFromDirectory(result.destPath);
+      var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
+	  for(var i = 0; i < filepaths.length; ++i) {
+		var newPath = encoding.convert(filepaths[i], "Latin_1");
+		fileutils.renameFile(filepaths[i], newPath);
+		fileutils[i] = newPath;
+	  }
       result.filepaths = filepaths;
       return result;
     } else {
       console.log(child.stdout);
     }
   }
+}
+
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
 }
 
 module.exports = UnZIP;

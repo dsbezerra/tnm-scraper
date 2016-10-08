@@ -1,5 +1,7 @@
-const fetch = require('node-fetch');
-const fs = require('fs');
+var fs = require('fs');
+
+require('es6-promise').polyfill();
+require('isomorphic-fetch');
 
 function download(uri, path, file, callback) {
   if(!uri)

@@ -26,6 +26,11 @@ var result = new Schema({
     uri: String,
     fileName: String,
     fileFormat: String
+  },
+  processed: {
+	  uri: String,
+	  fileName: String,
+	  fileFormat: String
   }
 }, { autoIndexID: true });
 

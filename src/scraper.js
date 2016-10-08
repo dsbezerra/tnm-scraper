@@ -15,7 +15,10 @@ var async               = require('async'),
     url                 = require('url'),
     util                = require('util'),
 
-    EventEmitter        = require('events');
+    EventEmitter        = require('events').EventEmitter;
+	
+	
+var objectAssign = require('object-assign');
 
 var logger              = require('./logger');
     
@@ -281,7 +284,7 @@ TNMScraper.prototype.init = function(options) {
  * Start the scraper routine
  */
 TNMScraper.prototype.start = function() {
-  var _TAG = `${TAG}(RoutineQueue)`;
+  var _TAG = TAG + '(RoutineQueue)';
   var self = this;
   var stats = self.stats;
 
@@ -371,8 +374,7 @@ TNMScraper.prototype.handleError = function(err) {
  * @param {function} nextTask Notifies the queue to advance
  */
 TNMScraper.prototype.getSession = function(nextTask) {
-
-  var _TAG = `${TAG}(GetSession)`;
+  var _TAG = TAG + '(GetSession)';
   
   var self = this;
   var options = self.options;
@@ -404,8 +406,7 @@ TNMScraper.prototype.getSession = function(nextTask) {
 
 /* ScrapeLinks Routine function */
 TNMScraper.prototype.scrapeLinks = function(nextTask) {
-
-  var _TAG = `${TAG}(scrapeLinks)`;
+  var _TAG = TAG + '(scrapeLinks)';
 
   var self = this;
   var stats = self.stats;
@@ -467,8 +468,7 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
 
 /* Scrape details */
 TNMScraper.prototype.scrapeDetails = function(callback) {
-
-  var _TAG = `${TAG}(scrapeDetails)`;
+  var _TAG = TAG + '(scrapeDetails)';
   
   var self = this;
   var stats = self.stats;
@@ -687,7 +687,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
   }
 
   if(self.aspnet) {
-    Object.assign(requestParams.form,
+    objectAssign(requestParams.form,
                   self.aspNetForm);
   }
   
@@ -749,7 +749,7 @@ TNMScraper.prototype.handlePagination = function (callback) {
 /* Performs a request */
 TNMScraper.prototype.performRequest = function(params, callback) {
 
-  var _TAG = `${TAG}(performRequest)`;
+  var _TAG = TAG + '(performRequest)';
   
   var self = this;
   var method, uri, headers, form;
@@ -831,7 +831,7 @@ TNMScraper.prototype.performRequest = function(params, callback) {
   }
 
   var seconds = Math.round(delay / 1000);
-  Log.i(TAG, `Request in ${seconds}s`);
+  Log.i(TAG, 'Request in ' + seconds + 's');
 
   setTimeout(function() {
     Log.i(_TAG, 'Requesting URL: ' + uri + ' (' + method + ')');
@@ -852,7 +852,7 @@ TNMScraper.prototype.performRequest = function(params, callback) {
 
 TNMScraper.prototype.updateStat = function(newStat) {
   var self = this;
-  self.stats = Object.assign(self.stats, newStat);
+  self.stats = objectAssign(self.stats, newStat);
   self.emitAsync('stats', self.stats);
 }
 
@@ -931,7 +931,7 @@ function buildSelectorString(selector) {
   var tag = element.tag;
   var name = element.attribute.name;
   var value = element.attribute.value;
-  return `${tag}[${name}='${value}']`;
+  return tag + '[' + name + '=' + value + ']';
 }
 
 /**
@@ -1120,8 +1120,8 @@ function getSubStringBetween(char, string) {
 
 
 function getAspNetFormData(cheerio, eventTarget) {
-
-  var _TAG = `${TAG}(getAspNetFormData)`;
+	
+  var _TAG = TAG + '(getAspNetFormData)';
   
   var result = {};
   
@@ -1147,8 +1147,7 @@ function getAspNetFormData(cheerio, eventTarget) {
 
 /* Load body */
 function loadBody(charset, body) {
-
-  var _TAG = `${TAG}(loadBody)`;
+  var _TAG = TAG + '(loadBody)';
   
   var result;
 
@@ -1175,7 +1174,7 @@ function loadBody(charset, body) {
  * Change this to extract content
  */
 function extractContent(stats, options, task, $) {
-  var _TAG = `${TAG}(extractContent)`;
+  var _TAG = TAG + '(extractContent)';
   
   var container, selectors, patterns, contents = [];
   
@@ -1207,12 +1206,12 @@ function extractContent(stats, options, task, $) {
 
           if(!LAST_RESULTS.results[content._hash]) {
             console.log("Found new item at index " + i);
-            console.log(`[${content._hash}][${content.number}] New!!!`);
             contents.push(content);
             stats.newBiddings++;
           }
           else {
-            console.log(`[${content._hash}][${content.number}] Already in database!!!`);
+			console.log(content.hash + ' - ' + content.number);
+            console.log('Already in database!!!');
           }
 
           stats.totalBiddings++;
