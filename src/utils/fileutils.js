@@ -1,5 +1,6 @@
 const fs = require("fs");
 const uuid = require("node-uuid");
+const encoding = require("encoding");
 
 /**
  * Get filepath of all files inside a given path, including sub directories (optional)
@@ -239,6 +240,14 @@ function renameFile(oldPath, newPath) {
 	fs.renameSync(oldPath, newPath);
 }
 
+function convertEncoding(buffer, to, from) {
+  var result = buffer;
+  
+  result = encoding.convert(buffer, to, from);
+  
+  return result;
+}
+
 /**
  * Get a Stats object of file or directory, or other things handled by stats
  * @param {String} path Path of file or directory
@@ -277,4 +286,5 @@ exports.getNameFromPath = getNameFromPath;
 exports.removeDirectory = removeDirectory;
 exports.readFile = readFile;
 exports.renameFile = renameFile;
+exports.convertEncoding = convertEncoding;
 exports.exists = exists;
