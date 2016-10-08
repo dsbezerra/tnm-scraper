@@ -190,34 +190,22 @@ function getNameFromPath(path, includeExt) {
  * @return {undefined} Nothing
  */
 function removeDirectory(path) {
-  try {
-      fs.rmdirSync(path);
-    } 
-    catch(e) {
-      
-      switch(e.code) {
-        case 'ENOTEMPTY':
-        {
-          const filenames = getFilenamesFromDirectory(path);
-          filenames.forEach(function(filename) {
-            const newPath = path + '/' + filename;
-            if(isDirectory(newPath)) {
-              return removeDirectory(newPath);
-            }
-            else if(isFile(newPath)) {
-              removeFile(newPath);
-            }
-          });
-        } break;
-        
-        default: 
-          console.log(e);
-      }
-    }
+  
+  if(!path)
+    throw new Error('path must be valid!');
     
-    // After delete all files and directory inside the parent,
-    // delete parent.
-    fs.rmdirSync(path);
+  var filenames = getFilenamesFromDirectory(path);
+  filenames.forEach(function(filename) {
+    var fullPath = path + '/' + filename;
+    if(isDirectory(fullPath)) {
+      removeDirectory(fullPath);
+    }
+    else {
+      removeFile(fullPath);
+    }
+  });
+  
+  fs.rmdirSync(path);
 }
 
 /**
