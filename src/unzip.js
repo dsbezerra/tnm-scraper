@@ -81,7 +81,7 @@ UnZIP.prototype.extract = function(callback) {
           {
             var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
       	    for(var i = 0; i < filepaths.length; ++i) {
-      		    var oldPath = fileutils[i];
+      		    var oldPath = filepaths[i];
       		    var newPath = fileutils.convertEncoding(oldPath, 'Latin_1');
       		    fileutils.renameFile(oldPath, newPath);
       		    filepaths[i] = newPath;
@@ -114,7 +114,7 @@ UnZIP.prototype.extractSync = function(callback) {
       console.log('Success!');
       var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
 	    for(var i = 0; i < filepaths.length; ++i) {
-	      var oldPath = fileutils[i];
+	      var oldPath = filepaths[i];
 		    var newPath = fileutils.convertEncoding(oldPath, 'Latin_1');
 		    fileutils.renameFile(oldPath, newPath);
 		    filepaths[i] = newPath;
