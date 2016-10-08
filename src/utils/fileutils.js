@@ -2,8 +2,6 @@ const fs = require("fs");
 const uuid = require("node-uuid");
 const encoding = require("encoding");
 
-removeDirectory('../../data/extracted_tmp/775391a0-8d7e-11e6-8903-f9ec390f2568.1');
-
 /**
  * Get filepath of all files inside a given path, including sub directories (optional)
  * @param {String} path Path of directory
