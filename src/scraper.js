@@ -1,29 +1,40 @@
 'use strict';
 
 /**
- * TODO(diego): Logging, refactoring...
- * change routine array items to tasks
+ * Scraper v1.0
  */
 
-var async               = require('async'),
+var 
+    // Async is used to control tasks
+    async               = require('async'),
+    // Cheerio is used to parse HTML
     cheerio             = require('cheerio'),
+    // Crypto is used to hash strings
     crypto              = require('crypto'),
-    fs                  = require('fs'),
+    // Iconv is used to parse encoded bodies
     iconv               = require('iconv-lite'),
+    // Lodash is used to simplify common operations
     _                   = require('lodash'),
+    // Request is the main request library used when requesting websites
     request             = require('request'),
+    // Used to resolve some uris
     url                 = require('url'),
+    // Used because inherits function, simplify inheritance
     util                = require('util'),
 
+    // EventEmitter is used to emit events while scraper is working,
+    // I used this to keep track of progress.
     EventEmitter        = require('events').EventEmitter;
 	
 	
-var objectAssign = require('object-assign');
+// Object.assign polyfill (needed to work with Openshift Node version)
+var objectAssign        = require('object-assign');
 
+// Logger util
 var logger              = require('./logger');
     
-
-// Got some from Mechanize
+// These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
+// Not using for now.
 var USER_AGENTS = [
   // Linus Firefox
   'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:43.0) Gecko/20100101 Firefox/43.0',
@@ -52,10 +63,13 @@ var USER_AGENTS = [
 ];
 
 
-// Get a random user-agent
+// Get a random User-Agent
 var defaultUserAgent =
   USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 
+//
+// Default headers used in requests
+//
 var defaultHeaders = {
   'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) ' +
                 'AppleWebKit/537.36 (KHTML, like Gecko) ' +
@@ -65,9 +79,16 @@ var defaultHeaders = {
 };
 
 var Log = null;
+
+// Main Scraper TAG
 var TAG = 'Scraper';
 
 var VERBOSE = false;
+
+//
+// Modalities possible names. 
+// Used when converting String -> Number
+//
 var MODALITIES = {
   'pp'                   : 0,
   'pregão presencial'    : 0,
@@ -91,20 +112,33 @@ var MODALITIES = {
   'convênio'             : 7
 };
 
+// 
+// Minimum delay possible between each request.
+//
 var MIN_DELAY = 1000;
 
+//
+// Task enumeration
+// Can be changed anytime.
+//
 var TASK = {
   GET_SESSION  : 'GET_SESSION',
   GET_LINKS    : 'GET_LINKS'  ,
   GET_DETAILS  : 'GET_DETAILS'
 };
 
-
+//
+// Global last results variable.
+// Temporary.
+//
 var LAST_RESULTS = {
   ids: [],
   results: {}
 };
 
+// 
+// "Constructor"
+//
 function TNMScraper(options) {
   
   var self = this;
@@ -141,7 +175,7 @@ function TNMScraper(options) {
   self.results = {};
 
   // Flag to control if we have an aspnet form or not
-  self.aspnet    = false;
+  self.aspnet = false;
   // Used to persist ASP.NET form between requests
   self.aspNetForm = {};
   // Delay used between requests (may be changed with a .json property)
@@ -149,7 +183,6 @@ function TNMScraper(options) {
 
   // To keep track of scraper progress
   self.stats = {
-
     isRunning: false,
     error: {},
     
@@ -189,7 +222,9 @@ TNMScraper.prototype.emitAsync = function(event, data) {
  */
 TNMScraper.prototype.init = function(options) {
   
-  Log.i(TAG, 'Initializing scraper...');
+  var _TAG = createTag('init', true);
+  
+  Log.i(_TAG, 'Initializing scraper...');
   
   var self = this;  
   var options = self.options;
@@ -200,7 +235,7 @@ TNMScraper.prototype.init = function(options) {
   // Check for ASPForm Handler
   if(options.aspnet) {
     self.aspnet = options.aspnet;
-    Log.d(TAG, 'ASPNet form handler enabled.');
+    Log.d(_TAG);
   }
 
   if(options.state) {
@@ -210,7 +245,7 @@ TNMScraper.prototype.init = function(options) {
   // Check for delay configuration
   if(options.delay) {
     if(isNaN(options.delay)) {
-      Log.w(TAG, 'Delay value is not a number. Setting delay to default ' +
+      Log.w(_TAG, 'Delay value is not a number. Setting delay to default ' +
                  self.delay + 'milliseconds.');
     }
     else if (options.delay >= 1000) {
@@ -221,7 +256,7 @@ TNMScraper.prototype.init = function(options) {
     }
   }
   else {
-    Log.i(TAG, 'No delay specified. Using default ' + self.delay + ' milliseconds.');
+    Log.i(_TAG, 'No delay specified. Using default ' + self.delay + ' milliseconds.');
   }
 
   // Request Object
@@ -230,20 +265,20 @@ TNMScraper.prototype.init = function(options) {
   };
   
   if(options.cookies) {
-    Log.d(TAG, 'Cookies enabled.');
+    Log.d(_TAG, 'Cookies enabled.');
     requestDefaults.jar = options.cookies;
   }
   else {
-    Log.d(TAG, 'Cookies enabled. (Default)');
+    Log.d(_TAG, 'Cookies enabled. (Default)');
     requestDefaults.jar = true;
   }
 
   if(options.followRedirects) {
-    Log.d(TAG, 'Follow all redirects enabled.');
+    Log.d(_TAG, 'Follow all redirects enabled.');
     requestDefaults.followAllRedirects = options.followRedirects;
   }
   else {
-    Log.d(TAG, 'Follow all redirects enabled. (Default)');
+    Log.d(_TAG, 'Follow all redirects enabled. (Default)');
     requestDefaults.followAllRedirects = true;
   }
 
@@ -264,7 +299,7 @@ TNMScraper.prototype.init = function(options) {
   }
   else {
     var err = new Error('Routine must exist in Scraper configuration.');
-    Log.e(TAG, err.message);
+    Log.e(_TAG, err.message);
     return;
   }
 
@@ -284,7 +319,8 @@ TNMScraper.prototype.init = function(options) {
  * Start the scraper routine
  */
 TNMScraper.prototype.start = function() {
-  var _TAG = TAG + '(RoutineQueue)';
+  var _TAG = createTag('start', true);
+  
   var self = this;
   var stats = self.stats;
 
@@ -349,6 +385,9 @@ TNMScraper.prototype.start = function() {
   }
 }
 
+/**
+ * All errors goes into this function. 
+ */
 TNMScraper.prototype.handleError = function(err) {
   var self = this;
   var stats = self.stats;
@@ -377,12 +416,21 @@ TNMScraper.prototype.getSession = function(nextTask) {
   var _TAG = TAG + '(GetSession)';
   
   var self = this;
+  var stats = self.stats;
   var options = self.options;
+  
+  var currentTask = stats.currentTask;
+  var task = self.routine[currentTask];
+  
   // Use baseURI as request uri to get session
   if(options.baseURI) {
     var requestParams = {
       uri: options.baseURI
     };
+    
+    if(task.request.getURI) {
+      requestParams.uri = options.baseURI + task.request.getURI;
+    }
 
     self.performRequest(requestParams, function(err) {
       if(!err) {
@@ -404,7 +452,12 @@ TNMScraper.prototype.getSession = function(nextTask) {
 }
 
 
-/* ScrapeLinks Routine function */
+/**
+ * ScrapeLinks Task
+ * This task must be the second (if we need to get a session first) or first.
+ * Is used to extract all links (that send us to the details page)
+ * @param {function} nextTask Notifies the queue to advance
+ */
 TNMScraper.prototype.scrapeLinks = function(nextTask) {
   var _TAG = TAG + '(scrapeLinks)';
 
@@ -466,8 +519,13 @@ TNMScraper.prototype.scrapeLinks = function(nextTask) {
 }
 
 
-/* Scrape details */
-TNMScraper.prototype.scrapeDetails = function(callback) {
+/**
+ * ScrapeDetails Task
+ * This task must be the third (if the first was GetSession) or second.
+ * It's used to extract all details from a page.
+ * @param {function} nextTask Notifies the queue to advance
+ */
+TNMScraper.prototype.scrapeDetails = function(nextTask) {
   var _TAG = TAG + '(scrapeDetails)';
   
   var self = this;
@@ -487,7 +545,7 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
     
     self.performRequest(requestParams, function(err, page) {
       if(err) {
-        return callback(err, null);
+        return nextTask(err, null);
       }
 
       var notice = extractNotice(page['$'], task.selectors, task.patterns, page.uri);
@@ -509,12 +567,12 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   if(contents) {
     if(contents.length === 0) {
       self.stats.message = 'Nenhuma licitação nova encontrada!';
-      return callback(null, contents);
+      return nextTask(null, contents);
     }
     
     detailsQueue.push(contents, function(err, resultNotice) {
       if(err) {
-        return callback(err, null);
+        return nextTask(err, null);
       }
 
       if(!self.results[TASK.GET_DETAILS]) {
@@ -535,10 +593,18 @@ TNMScraper.prototype.scrapeDetails = function(callback) {
   detailsQueue.drain = function() {
     var results = self.results[TASK.GET_DETAILS];
     stats.totalExtracted = results.length;
-    callback(null, results);
+    self.emitAsync('stats', stats);
+    nextTask(null, results);
   }
 }
 
+/**
+ * Resolve relative links to absolute links and/or links that are not links 
+ * but parameters to a POST request that will give us an absolute or 
+ * relative link.
+ * NOTE(diego): This was made with just a few websites in mind. 
+ * NEED MORE WORK!
+ */
 TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   var self = this;
   var stats = self.stats;
@@ -605,7 +671,9 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   }
 }
 
-/* Resolve links */
+/**
+ * OLD Resolve links (not used anymore) 
+ */
 TNMScraper.prototype._resolveLinks = function(links, page, uri, callback) {
   var self = this;
   var stats = self.stats;
@@ -1118,14 +1186,20 @@ function getSubStringBetween(char, string) {
   return result;
 }
 
-
+/**
+ * Extract ASP.NET form data (some sites use this system when handling forms)
+ * @param {object} cheerio Cheerio loaded body
+ * @param {String} eventTarget Optional eventTarget form property
+ * @return {object} A complete request body with all ASP.NET properties
+ */ 
 function getAspNetFormData(cheerio, eventTarget) {
-	
-  var _TAG = TAG + '(getAspNetFormData)';
+  
+  var _TAG = createTag('getAspNetFormData');
   
   var result = {};
   
-  //Log.d(_TAG, 'Start extracting ASP.NET form data...');
+  Log.d(_TAG, 'Start extracting ASP.NET form data...');
+  
   var eventValidation    = cheerio('#__EVENTVALIDATION').val();
   var viewStateGenerator = cheerio('#__VIEWSTATEGENERATOR').val();
   var viewState          = cheerio('#__VIEWSTATE').val();
@@ -1140,7 +1214,7 @@ function getAspNetFormData(cheerio, eventTarget) {
     result['__EVENTTARGET']        = eventTarget;
   }
   
-  //Log.d(_TAG, 'Finished extracting ASP.NET form data.');
+  Log.d(_TAG, 'Finished extracting ASP.NET form data.');
   
   return result;
 }
@@ -1171,10 +1245,10 @@ function loadBody(charset, body) {
 }
 
 /**
- * Change this to extract content
+ * DOC
  */
 function extractContent(stats, options, task, $) {
-  var _TAG = TAG + '(extractContent)';
+  var _TAG = createTag('extractingContent');
   
   var container, selectors, patterns, contents = [];
   
@@ -1206,11 +1280,12 @@ function extractContent(stats, options, task, $) {
 
           if(!LAST_RESULTS.results[content._hash]) {
             console.log("Found new item at index " + i);
+            console.log("Item\n" + content._hash + ' - ' + content.number);
             contents.push(content);
             stats.newBiddings++;
           }
           else {
-			console.log(content.hash + ' - ' + content.number);
+			      console.log(content._hash + ' - ' + content.number);
             console.log('Already in database!!!');
           }
 
@@ -1228,8 +1303,11 @@ function extractContent(stats, options, task, $) {
 }
 
 /**
- * Extract the minimum content
- *   
+ * Extract the minimum content from a given HTML element
+ * @param {object} item HTML element
+ * @param {object} selectors Array of selectors to use when extracting content
+ * @param {object} patterns Array of patterns to use when extracting content
+ * @return {object} A minimum content object to use when hashing
  */
 function extractMinimumContent(item, selectors, patterns) {
   var extracted = {};
@@ -1254,7 +1332,9 @@ function extractMinimumContent(item, selectors, patterns) {
 }
 
 /**
- *
+ * Creates a unique hash to be used as identifier when comparing contents
+ * @param {object} content Content to be hashed
+ * @return {String} An unique hash string
  */
 function getHashOfContent(content) {
   var hash = '';
@@ -1273,6 +1353,10 @@ function getHashOfContent(content) {
 /**
  * Extracts the text from a item, using selector and/or regex,
  * use arrays to handle multiple selectors and patterns
+ * @param {object} item HTML element
+ * @param {String} selector Selector string of element
+ * @param {String} pattern Pattern to be used when extracting text
+ * @return {String} Extracted text
  */
 function extractText(item, selector, pattern) {
   var text = '';
@@ -1293,9 +1377,9 @@ function extractText(item, selector, pattern) {
 
 /**
  * Extracts link from element
- * @param {object} item - html element
- * @param {String} selector - link selector
- * @param {String} Returns the link
+ * @param {object} item HTML element
+ * @param {String} selector Selector string of link
+ * @return {String} Returns the link
  */
 function extractLink(item, selector) {
   var link = '';
@@ -1325,6 +1409,9 @@ function extractLink(item, selector) {
 
 /**
  * Returns the text from element trimmed.
+ * @param {object} item HTML element
+ * @param {String} selector Selector string of element
+ * @return {String} Returns the text trimmed
  */
 function getTrimText(item, selector) {
   var text = '';
@@ -1346,8 +1433,12 @@ function getTrimText(item, selector) {
   return text;
 }
 
-/* Check if the href value is a doPostBack javascript call
-   and returns only the EVENTTARGET */
+/**
+ * Check if the href value is a doPostBack javascript call
+ * and returns only the EVENTTARGET 
+ * @param {String} href HREF attribute text value
+ * @return {boolean} True if contains __doPostBack and false if not
+ */
 function checkForDoPostBack(href) {
 
   if(!href) {
@@ -1363,6 +1454,11 @@ function checkForDoPostBack(href) {
   return value;
 }
 
+/**
+ * Converts a string date to a Javascript date format.
+ * @param {String} dateString A date in string format (DD-MM-YYYY or DD/MM/YYYY) 
+ * @return {Date} A javascript date object if successfull, undefined if not
+ */
 function convertToDateFormat(dateString) {
   var date;
 
@@ -1374,12 +1470,18 @@ function convertToDateFormat(dateString) {
   return date;
 }
 
+/**
+ * Converts a string date to a Javascript date format.
+ * @param {String} delimiter A delimiter used when splitting the date
+ * @param {String} string A date in string format
+ * @return {Date} Returns a javascript date if sucessfull, undefined if not.
+ */
 function convertToDate(delimiter, string) {
   if(!string)
-    return null;
+    return undefined;
 
   if(!delimiter)
-    return null;
+    return undefined;
 
   var parts = string.split(delimiter);
   if(parts.length === 3) {
@@ -1391,7 +1493,18 @@ function convertToDate(delimiter, string) {
     return new Date(Date.UTC(year, month, day, 12));    
   }
 
-  return null;
+  return undefined;
+}
+
+/**
+ * Create a tag for a subroutine in code
+ * @param {String} name Name of the subroutine
+ * return {String} A tag name
+ */
+function createTag(name) {
+  var result = TAG + '(' + name + ')';
+  
+  return result;
 }
 
 module.exports = TNMScraper;

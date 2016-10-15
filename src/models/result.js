@@ -14,8 +14,10 @@ var result = new Schema({
   openDate: Date,
   publishDate: Date,
   description: String,
+  amount: { type: Number, default: 0 },
   approved: { type: Boolean, default: false },
   ignored: { type: Boolean, default: false },
+  exclusive: { type: Boolean, default: false },
   website: String,
   category: {
     id: String,

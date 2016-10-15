@@ -1,11 +1,8 @@
-'use strict'
-
 var secrets = require('./config/secrets');
 var uuid = require('node-uuid');
 var _ = require('lodash');
 var path = require('path');
 var mongoose = require('mongoose');
-var Schema = mongoose.Schema;
 
 var objectAssign = require('object-assign');
 
@@ -19,10 +16,12 @@ var scrape = require('./index');
 
 function ScraperAPI() {
   var self = this;
-
-  self.progress = {};
-
+  self.progress = null;
+  
+  self.dbUri = null;
+  
   self.init();
+  self.connectToDatabase();
 }
 
 ScraperAPI.prototype.init = function() {
@@ -36,13 +35,22 @@ ScraperAPI.prototype.init = function() {
   if (process.env.MONGODB_URI) {
     uri = process.env.MONGODB_URI;
   }
-
-  mongoose.connect(uri, function(err) {
-    if (err) console.log(err);
-    else console.log('Connected to database!');
-  });
-
+  
+  self.dbUri = uri;
   self.progress = {};
+}
+
+
+ScraperAPI.prototype.connectToDatabase = function(callback) {
+  var self = this;
+  mongoose.connect(self.dbUri, function(err) {
+    if (err) { 
+      console.log(err);
+    }
+    else {
+      console.log('Connected to database!');
+    }
+  });
 }
 
 /**
@@ -50,9 +58,7 @@ ScraperAPI.prototype.init = function() {
  * Run a scraper  
  */
 ScraperAPI.prototype.runScraper = function(req, res) {
-
   var self = this;
-
   var id = req.body.id;
   var taskId = uuid.v1();
 
@@ -60,10 +66,12 @@ ScraperAPI.prototype.runScraper = function(req, res) {
     findScraperIncludingLastResults(id, function(err, scraper) {
       if (err) {
         console.log(err);
-      } else {
+      } 
+      else {
         var options = {
           scraper: scraper,
         };
+        
         var configPath = path.join('scrapers', scraper._id + '.json');
         var _scraper = scrape(configPath, options, function(err, results) {
 
@@ -85,18 +93,19 @@ ScraperAPI.prototype.runScraper = function(req, res) {
               var r = new Result(results[i]);
               r.save();
             }
-          } else {
-            delete self.progress[taskId];
-          }
+          } 
         });
 
-        _scraper.on('error', function(message) {
+        // 
+        // onError Event: not handled for now.
+        //
+        _scraper.on('error', function(message) {});
 
-        });
-
-        // Add scraper to running
+        // 
+        // onStart Event: Updates scraper status in database.
+        // Will be useful in future
+        //
         _scraper.on('start', function(message) {
-
           updateRunning(scraper, true, function(err, raw) {
             if (err) {
               console.log(err);
@@ -107,21 +116,29 @@ ScraperAPI.prototype.runScraper = function(req, res) {
             });
           });
         });
-
-
+        
+        //
+        // onFinish Event: Deletes the task progress
+        //
+        _scraper.on('finish', function(data) {
+          console.log('Removing progress data in 5s');
+            setTimeout(function() {
+              delete self.progress[taskId];
+              console.log('Removed ' + taskId + ' progress data!');
+            }, 5000);
+        });
+        
+        //
+        // onStats Event: We keep track of current task progress
+        // by using its ID to update with current statistics from Scraper!
+        //
         _scraper.on('stats', function(stats) {
           self.progress[taskId] = stats;
         });
-
-        // On results, save in database and send data to client
-        _scraper.on('finish', function(data) {
-          // Remove from running
-          console.log(data);
-          delete self.progress[taskId];
-        });
       }
     });
-  } else {
+  } 
+  else {
     return res.status(500)
       .send(makeError('id params is invalid!'));
   }
@@ -232,10 +249,13 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
           .send(makeError(err.message,
             err.code));
       }
+      
+      console.log(pending);
 
       return res.send(makeResponse(true, pending));
     });
-  } else {
+  } 
+  else {
     return res.status(500).
     send(makeError('id param is not valid'));
   }

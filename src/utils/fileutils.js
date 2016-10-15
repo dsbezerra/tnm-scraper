@@ -31,11 +31,11 @@ const encoding = require("encoding");
  * @param {String} path Path of directory
  * @return {object} Array of filenames founded inside directory
  */
-function getFilenamesFromDirectory(path) {
+function getFilenamesFromDirectory(path, encoding) {
   var result = [];
   
   if(isDirectory(path)) {
-    result = fs.readdirSync(path);
+    result = fs.readdirSync(path, { encoding: encoding || 'ISO-8859-1' });
   }
   
   return result;
@@ -67,9 +67,7 @@ function isFile(path) {
   
   if(stats)
     result = stats.isFile();
-  else 
-	console.log(path);
-
+    
   return result;
 }
 
@@ -169,6 +167,7 @@ function getNameFromPath(path, includeExt) {
         extIndex = i;
         break;
       default:
+        // Do nothing
         break;
     }
   }

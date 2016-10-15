@@ -12,31 +12,27 @@ require('es6-promise').polyfill();
 require('isomorphic-fetch');
 
 var CURRENT_WORKING_DIR = process.cwd() + '/';
-var DATA_DIR = CURRENT_WORKING_DIR + 'data/';						  
+var DATA_DIR = CURRENT_WORKING_DIR + 'data/';
 var TMP_DIR = DATA_DIR + 'extracted_tmp/';
 
 var tasksProgress = {};
 
 var RESULT_CODE = {
   NONE: 0,
-  
-  ERROR_CONVERT_PDF:      501,
-  ERROR_UPLOAD_FTP:       502,
-  ERROR_EXTRACTION:       503,
-  ERROR_DOWNLOAD:         504,
-  ERROR_FILE_NOT_FOUND:   505,
-  ERROR_UNSUPPORTED_FILE: 506,
-  
-  
-  SUCCESS_CONVERT_PDF:    201,
-  SUCCESS_UPLOAD_FTP:     202,
-  SUCCESS_EXTRACTION:     203,
-  SUCCESS_DOWNLOAD:       204,
-}
 
-//
-// TODO(diego): Create ENUMS for error codes, remove hard coded strings, etc.
-//
+  ERROR_CONVERT_PDF: 501,
+  ERROR_UPLOAD_FTP: 502,
+  ERROR_EXTRACTION: 503,
+  ERROR_DOWNLOAD: 504,
+  ERROR_FILE_NOT_FOUND: 505,
+  ERROR_UNSUPPORTED_FILE: 506,
+
+
+  SUCCESS_CONVERT_PDF: 201,
+  SUCCESS_UPLOAD_FTP: 202,
+  SUCCESS_EXTRACTION: 203,
+  SUCCESS_DOWNLOAD: 204,
+}
 
 /**
  * Process a file and convert to pdf or uncompress
@@ -49,7 +45,7 @@ exports.process = function(req, res) {
       uri = body.uri,
       filename = body.filename,
       format = body.format,
-	  fileIndex = body.fileIndex;
+      fileIndex = body.fileIndex;
 
     var taskId = uuid.v1();
 
@@ -79,7 +75,7 @@ exports.process = function(req, res) {
             running: false,
             code: RESULT_CODE.ERROR_DOWNLOAD
           });
-		  return;
+          return;
         }
 
         updateTask(taskId, {
@@ -112,7 +108,8 @@ exports.process = function(req, res) {
                 message: 'Extração finalizada com sucesso!',
                 data: response
               });
-            } else {
+            } 
+            else {
               updateTask(taskId, {
                 running: false,
                 code: RESULT_CODE.ERROR_EXTRACTION
@@ -120,19 +117,19 @@ exports.process = function(req, res) {
             }
           });
         } 
-		else if (isWordDocument(format)) {
+        else if (isWordDocument(format)) {
           updateTask(taskId, {
             message: 'Convertendo para PDF...'
           });
           convertToPDF(destPath, function(err, file) {
             if (err) {
-			  console.log(err);
+              console.log(err);
               updateTask(taskId, {
                 running: false,
                 code: RESULT_CODE.ERROR_CONVERT_PDF,
                 message: 'Falha ao converter para PDF!'
               });
-			}
+            } 
             else {
               updateTask(taskId, {
                 code: RESULT_CODE.SUCCESS_CONVERT_PDF,
@@ -140,13 +137,13 @@ exports.process = function(req, res) {
               });
               uploadToHostgator(file, function(err, result) {
                 if (err) {
-				  console.log(err);
+                  console.log(err);
                   updateTask(taskId, {
                     running: false,
                     code: RESULT_CODE.ERROR_UPLOAD_FTP,
                     message: 'Falha ao enviar para o Hostgator!'
                   });
-				}
+                } 
                 else {
                   fileutils.removeFile(destPath);
                   updateTask(taskId, {
@@ -159,7 +156,8 @@ exports.process = function(req, res) {
               });
             }
           });
-        } else {
+        } 
+        else {
           // TODO(diego): Add support to ODT
           updateTask(taskId, {
             running: false,
@@ -171,7 +169,7 @@ exports.process = function(req, res) {
     }
     // If we already have this file extracted
     else if (id && filename && format && fileIndex) {
-	  var filepaths = fileutils.getFilePathsFromDirectory(TMP_DIR + id, true);
+      var filepaths = fileutils.getFilePathsFromDirectory(TMP_DIR + id, true);
       var path = filepaths[fileIndex];
       if (isWordDocument(format)) {
         updateTask(taskId, {
@@ -181,12 +179,12 @@ exports.process = function(req, res) {
         convertToPDF(path, function(err, file) {
           if (err) {
             console.log(err);
-			updateTask(taskId, {
+            updateTask(taskId, {
               running: false,
               code: RESULT_CODE.ERROR_CONVERT_PDF,
               message: 'Falha ao converter para PDF!'
             });
-		  }
+          } 
           else {
             updateTask(taskId, {
               code: RESULT_CODE.SUCCESS_CONVERT_PDF,
@@ -199,7 +197,7 @@ exports.process = function(req, res) {
                   code: RESULT_CODE.ERROR_UPLOAD_FTP,
                   message: 'Falha ao enviar para o Hostgator!'
                 });
-			  }
+              } 
               else {
                 fileutils.removeDirectory('data/extracted_tmp/' + id);
                 updateTask(taskId, {
@@ -212,7 +210,8 @@ exports.process = function(req, res) {
             });
           }
         });
-      } else if (isPDFDocument(format)) {
+      } 
+      else if (isPDFDocument(format)) {
         var path = TMP_DIR + id + '/' + filename;
         var buffer = fileutils.readFile(path);
         if (buffer) {
@@ -225,12 +224,13 @@ exports.process = function(req, res) {
             message: 'Upando para o hostgator...'
           });
           uploadToHostgator(file, function(err, result) {
-            if (err)
+            if (err) {
               updateTask(taskId, {
                 running: false,
                 code: RESULT_CODE.ERROR_UPLOAD_FTP,
                 message: 'Falha ao enviar para o Hostgator!'
               });
+            }
             else {
               fileutils.removeDirectory(TMP_DIR + id);
               updateTask(taskId, {
@@ -241,14 +241,16 @@ exports.process = function(req, res) {
               });
             }
           });
-        } else {
+        } 
+        else {
           updateTask(taskId, {
             running: false,
             code: RESULT_CODE.ERROR_FILE_NOT_FOUND,
             message: 'Não foi possível encontrar o arquivo!'
           });
         }
-      } else {
+      } 
+      else {
         // TODO(diego): Add support to ODT
         updateTask(taskId, {
           running: false,
@@ -257,36 +259,36 @@ exports.process = function(req, res) {
         });
       }
 
-    } else {
+    } 
+    else {
       // TODO(diego): Handle param missing.
     }
 
-  } else {
+  } 
+  else {
     console.log('No body');
     return res.status(204).send('');
   }
 }
 
 exports.checkProgress = function(req, res) {
-  if(req.body) {
+  if (req.body) {
     var id = req.body.id;
     var response = tasksProgress[id];
-    
-    if(response) {
-      if(!response.running) {
+
+    if (response) {
+      if (!response.running) {
         delete tasksProgress[id];
-      } 
-      
+      }
+
       return res.send(response);
-    }
-    else {
+    } else {
       return res.send({
         success: true,
         message: 'Nenhum processo em execução.'
       })
     }
-  }
-  else {
+  } else {
     return res.status(500).send({
       success: false,
       message: '\'id\' param is missing.'
@@ -296,18 +298,18 @@ exports.checkProgress = function(req, res) {
 
 function uploadToHostgator(file, callback) {
   var ftpUploader = new FtpUploader('http://tnmlicitacoes.com/files/');
-  
+
   const HOSTGATOR_FOLDER_NAME =
-                   process.env.NODE_ENV === 'production' ? 'editais' : 'stream';
-				   
-	ftpUploader.client.on('ready', function() {
-	  ftpUploader.put(file, HOSTGATOR_FOLDER_NAME, function(err, result) {
-	    if(err) return callback(err);
-	    else {
-	      return callback(null, result);
-	    }	
-	  });
-	});
+    process.env.NODE_ENV === 'production' ? 'editais' : 'stream';
+
+  ftpUploader.client.on('ready', function() {
+    ftpUploader.put(file, HOSTGATOR_FOLDER_NAME, function(err, result) {
+      if (err) return callback(err);
+      else {
+        return callback(null, result);
+      }
+    });
+  });
 }
 
 function convertToPDF(filepath, callback) {
@@ -324,9 +326,9 @@ function convertToPDF(filepath, callback) {
 
       var buffer = fileutils.readFile(filepath);
       var filename = fileutils.getNameFromPath(filepath, false);
-	  
-	  console.log(buffer);
-	  console.log(filename);
+
+      console.log(buffer);
+      console.log(filename);
 
       if (buffer && filename) {
         var $ = cheerio.load(body);
@@ -366,7 +368,8 @@ function convertToPDF(filepath, callback) {
           .catch(function(err) {
             return callback(err);
           })
-      } else {
+      } 
+      else {
         return callback({
           message: 'Buffer is null!'
         });
@@ -390,7 +393,7 @@ function isCompressed(format) {
 function isWordDocument(format) {
   return format === 'doc' || format === 'docx';
 }
- 
+
 /**
  * Check if is a pdf document
  */
@@ -399,6 +402,6 @@ function isPDFDocument(format) {
 }
 
 function updateTask(taskId, data) {
-  tasksProgress[taskId] = objectAssign(tasksProgress[taskId] ? 
-                                        tasksProgress[taskId] : {}, data);
-} 
+  tasksProgress[taskId] = objectAssign(tasksProgress[taskId] ?
+    tasksProgress[taskId] : {}, data);
+}

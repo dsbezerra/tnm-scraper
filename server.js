@@ -6,7 +6,6 @@ const logger       = require('morgan');
 
 
 const FilesController = require('./src/controllers/files');
-
 const ScraperAPI = require('./api');
 
 const app = express();
@@ -20,7 +19,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(logger('dev'));
 
-const scraperApi = new ScraperAPI();
+var scraperApi = new ScraperAPI();
 
 app.get('/', function(req, res) {
   res.send('Cobol!');
@@ -73,7 +72,9 @@ app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 // desc - Check progress of running scraper
 // endpoint - /scrapers/checkProgress/:id
 //
-app.get('/scrapers/checkProgress/:id', scraperApi.checkProgress);
+app.get('/scrapers/checkProgress/:id', function(req, res) {
+  scraperApi.checkProgress.apply(scraperApi, [req, res]);
+});
 
 //
 // *DOC*
@@ -88,7 +89,9 @@ app.post('/files/checkProgress', FilesController.checkProgress);
 app.post('/scrapers', scraperApi.insertScraper);
 
 // Run a scraper
-app.post('/scrapers/run', scraperApi.runScraper);
+app.post('/scrapers/run', function(req, res) {
+  scraperApi.runScraper.apply(scraperApi, [req, res]);
+});
 
 // Updates a scraper
 app.put('/scrapers/:id', scraperApi.updateScraper);

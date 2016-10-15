@@ -62,7 +62,7 @@ UnRAR.prototype.extract = function(callback) {
     var name = fileutils.getNameFromPath(self.filePath);
     var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
 
-	var COMMAND = 'e -ai ' + self.filePath + ' ' + result.destPath;
+	var COMMAND = ' e -ai ' + self.filePath + ' ' + result.destPath;
     var child = exec(UNRAR_PATH + COMMAND, function(error, stdout, stderr) {
       if (error) {
         console.error('exec error: ' + error);
@@ -80,12 +80,6 @@ UnRAR.prototype.extract = function(callback) {
         case 0:
           {
             var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
-      	    for(var i = 0; i < filepaths.length; ++i) {
-      		    var oldPath = filepaths[i];
-      		    var newPath = fileutils.convertEncoding(oldPath, 'Latin_1');
-      		    fileutils.renameFile(oldPath, newPath);
-      		    filepaths[i] = newPath;
-      	    }
             result.filepaths = filepaths;
             return callback(null, result);
           }
@@ -115,12 +109,6 @@ UnRAR.prototype.extractSync = function() {
     if (child.status === 0) {
       console.log('Success!');
       var filepaths = fileutils.getFilePathsFromDirectory(result.destPath, true);
-	    for(var i = 0; i < filepaths.length; ++i) {
-		    var oldPath = filepaths[i];
-		    var newPath = fileutils.convertEncoding(oldPath, 'Latin_1');
-		    fileutils.renameFile(oldPath, newPath);
-		    filepaths[i] = newPath;
-	    }
       result.filepaths = filepaths;
       return result;
     } else {

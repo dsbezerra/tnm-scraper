@@ -76,7 +76,7 @@ function Logger(options) {
     flags: 'w',
     defaultEncoding: 'utf8',
     fd: null,
-    mode: 666,
+    mode: 777,
     autoClose: true
   });
 }
@@ -113,8 +113,11 @@ function isLoggable(level) {
 }
 
 function printArray(array, color) {
+  if(array.length === 0) {
+    colors[color]('No data.');
+  }
   for (var i = 0; i < array.length; ++i) {
-	console.log(colors[color]('Item ' + (i + 1) + ': ' + array[i]));
+	  console.log(colors[color]('Item ' + (i + 1) + ': ' + array[i]));
   }  
 }
 
@@ -139,7 +142,7 @@ function printObject(object, color) {
             value = value.substring(0, 47) + '...';
           }
         }
-		console.log('\t\t' + colors[colors]('(' + key + ', ' + value + ')'));
+		    console.log('\t\t' + colors[colors]('(' + key + ', ' + value + ')'));
       }
     }
 }
@@ -187,14 +190,12 @@ Logger.prototype.print = function(tag, message, LogLevel, data) {
   }
 
   if(data) {
-    console.log(colors[color]('---- BEGIN DATA ----'));
     if (Array.isArray(data)) {
       printArray(data, color);    
     }
     else if (isObject(data)) {
       printObject(data, color);
     }
-    console.log(colors[color]('---- END DATA ----'));
   }
 }
 

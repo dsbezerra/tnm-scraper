@@ -1,5 +1,5 @@
 {
-  "name": "S„o Paulo - Preg„o Presencial",
+  "name": "S√£o Paulo - Preg√£o Presencial",
   "baseURI": "http://e-negocioscidadesp.prefeitura.sp.gov.br/",
   "delay": 2000,
   "charset": "iso-8859-1",
@@ -8,16 +8,32 @@
   "routine": [
     {
       "id": "GET_SESSION",
-      "name": "GetSession"
+      "name": "GetSession",
+      "request": {
+        "getURI": "BuscaLicitacao.aspx",
+        "method": "GET"
+      }
     },
     {
       "id": "GET_LINKS",
       "name": "GetLinks",
       "request": {
-        "postURI": "Default.aspx",
+        "postURI": "BuscaLicitacao.aspx",
         "method": "POST",
         "form": {
-          "__EVENTTARGET": "ctl00$cphConteudo$uccPainelLicitacao$gdvContent$ctl03$lbtPainelLicitacoes"
+          "__EVENTTARGET": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$ddlArea": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$ddlSecretaria": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$ddlModalidade": 10,
+          "ctl00$cphConteudo$frmBuscaLicitacao$ddlStatus": 1,
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtLicitacao": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtProcesso": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtDataPublicacaoInicio": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtDataPublicacaoFim": "",
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtDataAberturaSessaoInicio": "14/10/2016",
+          "ctl00$cphConteudo$frmBuscaLicitacao$txtDataAberturaSessaoFim": "14/10/2017",
+          "ctl00$cphConteudo$frmBuscaLicitacao$ibtBuscar.x": 21,
+          "ctl00$cphConteudo$frmBuscaLicitacao$ibtBuscar.y": 7
         }
       },
       "list": true,
