@@ -1,17 +1,36 @@
+  
+  TODO LIST
 
+    - Not done.
+    / Partially done.
+    * Done.
 
-TODO LIST
+Version v1.1.0
+- Add PDF merging functionally
+- Add PDF extracting content
+  - Extract estimated amount
+  - Extract exclusivity
+  
+- Support ignoring options
+  - Ignore by properties (date, number, etc...)
+  
+- Add support for initial date when requests
 
-
-Scrapers
-
-[x] São Paulo (http://e-negocioscidadesp.prefeitura.sp.gov.br/)
-
-
-
+- Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
+  - Date wildcard
 
 Version v1.0.0
 
-[x] Support ASPNET forms.
-[x] Support pagination (funcionando em são paulo)
-[x] Redo GetSession routine
+* Minimal functionally to work.
+
+* Extraction of compressed archives
+  * ZIP format
+  * RAR format
+ 
+/ Conversion of documents to PDF
+  * DOC/DOCX format
+  - ODT format
+  
+* Support ASPNET forms.
+* Support pagination (funcionando em são paulo)
+* Redo GetSession routine
