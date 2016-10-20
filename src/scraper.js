@@ -1028,7 +1028,7 @@ function isFileDownloadLink(string) {
  function isJavascriptFunction(string) {
    if(!string) return false;
    var test = string.toLowerCase();
-   return test.startsWith('javascript');
+   return startsWith(test, 'javascript');
  }
  
  function extractJavascriptFunctionNameFrom(string) {
@@ -1577,6 +1577,10 @@ function createTag(name) {
   var result = TAG + '(' + name + ')';
   
   return result;
+}
+
+function startsWith(strA, strB) {
+	return new RegExp("^" + strB).test(strA);
 }
 
 module.exports = TNMScraper;
