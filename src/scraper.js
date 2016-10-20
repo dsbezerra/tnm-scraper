@@ -964,9 +964,10 @@ function extractNotice(cheerio, selectors, patterns, currentURI) {
   if(result.publishDate) {
     result.publishDate = convertToDateFormat(result.publishDate);
   }
-
-  if(!result.description.endsWith('.')) {
+  
+  if(!endsWith(result.description, '\\.')) {
     result.description += '.';
+    
   }
   
   return result;
@@ -984,9 +985,9 @@ function isUriValid(uri) {
   else if(uri.match(/(http|https|):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])?/)) {
     return true;
   }
-  else if(uri.startsWith('../') ||
-          uri.startsWith('/')   ||
-          uri.startsWith('?'))
+  else if(startsWith(uri, '../') ||
+          startsWith(uri, '/')   ||
+          startsWith(uri, '?'))
     {
       return true;
     }
@@ -1015,9 +1016,9 @@ function isFileDownloadLink(string) {
   if(!string) return false;
   var test = string.toLowerCase();
   return (
-    test.endsWith('.pdf')  || test.endsWith('.doc')  || 
-    test.endsWith('.docx') || test.endsWith('.zip')  || 
-    test.endsWith('.rar')  || test.endsWith('.odt')
+    endsWith(test, '\\.pdf') || endsWith(test, '\\.doc') ||
+    endsWith(test, '\\.docx') || endsWith(test, '\\.zip') ||
+    endsWith(test, '\\.rar') || endsWith(test, '\\.odt')
   );
 }
 
@@ -1581,6 +1582,10 @@ function createTag(name) {
 
 function startsWith(strA, strB) {
 	return new RegExp("^" + strB).test(strA);
+}
+
+function endsWith(strA, strB) {
+	return new RegExp(strB + "$").test(strA);
 }
 
 module.exports = TNMScraper;
