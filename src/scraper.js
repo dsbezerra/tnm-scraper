@@ -184,6 +184,9 @@ function TNMScraper(options) {
   // To keep track of scraper progress
   self.stats = {
     isRunning: false,
+    startTime: null,
+    endTime: null,
+    
     error: {},
     
     // Biddings Stats
@@ -325,7 +328,7 @@ TNMScraper.prototype.start = function() {
   var stats = self.stats;
 
   self.emitAsync('start', 'Rodando scraper...');
-  self.updateStat({message: 'Rodando scraper...', isRunning: true });
+  self.updateStat({message: 'Rodando scraper...', isRunning: true, startTime: Date.now() });
   
   // Define queue
   self.routineQueue = async.queue(function(task, callback) {
@@ -379,6 +382,7 @@ TNMScraper.prototype.start = function() {
     if(self.completeCallback) {
       var notices = self.results[TASK.GET_DETAILS];
       stats.isRunning = false;
+      stats.endTime = Date.now();
       self.emitAsync('finish', notices);
       return self.completeCallback(null, notices);
     }
@@ -551,6 +555,7 @@ TNMScraper.prototype.scrapeDetails = function(nextTask) {
       var notice = extractNotice(page['$'], task.selectors, task.patterns, page.uri);
       
       if(notice) {
+        // Pass hash to final model
         notice._hash = content._hash;
         notice.website = page.uri;
         //self.emitAsync('notice', notice);
@@ -1016,6 +1021,55 @@ function isFileDownloadLink(string) {
   );
 }
 
+/**
+ * Check if is a javascript function
+ * @param {string} tring String to be checked
+ */
+ function isJavascriptFunction(string) {
+   if(!string) return false;
+   var test = string.toLowerCase();
+   return test.startsWith('javascript');
+ }
+ 
+ function extractJavascriptFunctionNameFrom(string) {
+   if(!string) return '';
+   
+   var name = '';
+   var i = 0;
+   var extracting = false;
+   var readingParameters = false;
+   var c = string.charAt(i);
+   while(c) {
+     switch(c) {
+       case '(':
+         readingParameters = true;
+         break;
+       case ')':
+         readingParameters = false;
+         break;
+       case ';':
+         break;
+       case ':':
+         extracting = true;
+         break;
+         
+       default:
+       {
+         if(extracting && !readingParameters) {
+           name += c;
+         }
+       } break;
+     }
+     
+     c = string.charAt(++i);
+     
+     if(readingParameters)
+       break;
+   }
+   
+   return name;
+ }
+ 
 function resolveRelativeURI(currentURI, relativeURI) {
   return url.resolve(currentURI, relativeURI);
 }
@@ -1054,6 +1108,9 @@ function extractDownloadInfo(selector, currentURI, container, $) {
   else if (isFileDownloadLink(href)) {
     info.fileName = href.substring(href.lastIndexOf('/') + 1);
     info.fileFormat = href.substring(href.lastIndexOf('.') + 1);
+  }
+  else if (isJavascriptFunction(href)) {
+    var functionName = extractJavascriptFunctionNameFrom(href);
   }
   
   return info;
@@ -1277,18 +1334,22 @@ function extractContent(stats, options, task, $) {
         var content = extractMinimumContent(item, selectors, patterns);
         content._hash = getHashOfContent(content);
         if(content._hash) {
-
+          // Here we check if the current item is one of the latest results found
+          // by scraper. If true, we add to array of contents to be scraped, if false
+          // we just ignore it for now.
           if(!LAST_RESULTS.results[content._hash]) {
-            console.log("Found new item at index " + i);
-            console.log("Item\n" + content._hash + ' - ' + content.number);
+            Log.i(_TAG, 'New item at index ' + i);
+            Log.i(_TAG, 'MD5: ' + content._hash);
             contents.push(content);
             stats.newBiddings++;
           }
           else {
-			      console.log(content._hash + ' - ' + content.number);
-            console.log('Already in database!!!');
+            // TODO(diego): Check here if we have modifications
+            // For now, just log that.
+            Log.i(_TAG, 'This item already exists in database!');
+            
           }
-
+          
           stats.totalBiddings++;
         }
       }
@@ -1338,14 +1399,25 @@ function extractMinimumContent(item, selectors, patterns) {
  */
 function getHashOfContent(content) {
   var hash = '';
+  
+  var md5 = crypto.createHash('md5');
 
   /**
    * NUMBER-DATE-DESCRIPTION md5 hash
    */
-  if(content.number && content.openDate && content.description) {
+  /*if(content.number && content.openDate && content.description) {
     var string = content.number + content.openDate + content.description;
     hash = crypto.createHash('md5').update(string).digest("hex");
+  }*/
+  if(content.number && content.agency && content.modality) {
+    var string = content.number + content.agency + content.modality;
+    hash = md5.update(string).digest('hex');
   }
+  else if (content.link) {
+    hash = md5.update(content.link).digest('hex');
+  }
+  
+  Log.d(TAG, 'MD5: ' + hash);
 
   return hash;
 }

@@ -6,19 +6,17 @@
     * Done.
 
 Version v1.1.0
-- Add PDF merging functionally
-- Add PDF extracting content
-  - Extract estimated amount
-  - Extract exclusivity
-  
-- Support ignoring options
+- Add ignoring options
   - Ignore by properties (date, number, etc...)
-  
 - Add support for initial date when requests
-
 - Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
   - Date wildcard
-
+- Add PDF merging functionality
+- Add PDF extracting content functionality
+  - PDF.js or pdf2json handler
+    - Extract estimated amount
+    - Extract exclusivity
+  
 Version v1.0.0
 
 * Minimal functionally to work.
