@@ -1559,8 +1559,11 @@ function convertToDate(delimiter, string) {
   var parts = string.split(delimiter);
   if(parts.length === 3) {
     // TODO(diego): Do more checks here...
+    
+    // NOTE(diego): For some unknown reason we need to subtract 1 from month
+    // to match correctly the month, but in OpenShift we don't...
     var year  = Number(parts[2]),
-        month = Number(parts[1]) - 1 /* Begins at 0 (Jan), 1 (Feb) etc... */,
+        month = Number(parts[1]),
         day   = Number(parts[0]);
 
     return new Date(Date.UTC(year, month, day, 12));    
