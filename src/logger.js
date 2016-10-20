@@ -47,7 +47,7 @@ function Logger(options) {
 
   if(!options) {
     options = {
-      persist: true
+      persist: false
     };
   }
 
