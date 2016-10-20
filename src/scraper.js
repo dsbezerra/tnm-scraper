@@ -985,9 +985,9 @@ function isUriValid(uri) {
   else if(uri.match(/(http|https|):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])?/)) {
     return true;
   }
-  else if(startsWith(uri, '\.\.\/') ||
-          startsWith(uri, '\/')   ||
-          startsWith(uri, '\?'))
+  else if(startsWith(uri, '../') ||
+          startsWith(uri, '/')   ||
+          startsWith(uri, '?'))
     {
       return true;
     }
@@ -1581,7 +1581,7 @@ function createTag(name) {
 }
 
 function startsWith(strA, strB) {
-	return new RegExp("^" + strB).test(strA);
+  return strA.indexOf(strB) === 0;
 }
 
 function endsWith(strA, strB) {
