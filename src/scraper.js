@@ -985,9 +985,9 @@ function isUriValid(uri) {
   else if(uri.match(/(http|https|):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])?/)) {
     return true;
   }
-  else if(startsWith(uri, '../') ||
-          startsWith(uri, '/')   ||
-          startsWith(uri, '?'))
+  else if(startsWith(uri, '\.\.\/') ||
+          startsWith(uri, '\/')   ||
+          startsWith(uri, '\?'))
     {
       return true;
     }
