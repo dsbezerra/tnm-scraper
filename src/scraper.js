@@ -1559,7 +1559,7 @@ function convertToDate(delimiter, string) {
   if(parts.length === 3) {
     // TODO(diego): Do more checks here...
     var year  = Number(parts[2]),
-        month = Number(parts[1]),
+        month = Number(parts[1]) - 1 /* Begins at 0 (Jan), 1 (Feb) etc... */,
         day   = Number(parts[0]);
 
     return new Date(Date.UTC(year, month, day, 12));    
