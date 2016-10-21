@@ -70,15 +70,16 @@ function Logger(options) {
   }
   
   var logFilePath = path.resolve('./logs/' + fileName + '.log');
+  if(self.options.persist) {
+    self.logWriter = fs.createWriteStream(logFilePath, {
+      flags: 'w',
+      defaultEncoding: 'utf8',
+      fd: null,
+      mode: 700,
+      autoClose: true
+    });
+  }
   
-  self.logWriter;
-  self.logWriter = fs.createWriteStream(logFilePath, {
-    flags: 'w',
-    defaultEncoding: 'utf8',
-    fd: null,
-    mode: 777,
-    autoClose: true
-  });
 }
 
 
@@ -158,6 +159,8 @@ function isObject(a) {
  * @param {LOG} object LogLevel object
  */
 Logger.prototype.print = function(tag, message, LogLevel, data) {
+  
+  var self = this;
 
   if(!isLoggable(LogLevel.level)) {
     return;
@@ -183,9 +186,9 @@ Logger.prototype.print = function(tag, message, LogLevel, data) {
   var color = LogLevel.color;
   console.log(colors[color](log));
 
-  if(this.options.persist) {
-    if(this.logWriter) {
-      this.logWriter.write(log + '\r\n');
+  if(self.options.persist) {
+    if(self.logWriter) {
+      self.logWriter.write(log + '\r\n');
     }
   }
 
