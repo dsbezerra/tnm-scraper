@@ -144,7 +144,7 @@ function TNMScraper(options) {
   var self = this;
   var _options = options || { cookies: true, followRedirects: true };
 
-  Log = new logger({ DEBUG: false, persist: true, name: _options.name });
+  Log = new logger({ DEBUG: false, persist: false, name: _options.name });
 
   EventEmitter.call(self);  
 
