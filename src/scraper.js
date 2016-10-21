@@ -1377,6 +1377,8 @@ function extractMinimumContent(item, selectors, patterns) {
 
   if(selectors.modality)
     extracted.modality = extractText(item, selectors.modality, patterns.modality);
+  if(selectors.agency)
+    extracted.agency = extractText(item, selectors.agency, patterns.agency);
   if(selectors.number)
     extracted.number = extractText(item, selectors.number, patterns.number);
   if(selectors.openDate)
@@ -1385,8 +1387,7 @@ function extractMinimumContent(item, selectors, patterns) {
     extracted.publishDate = extractText(item, selectors.publishDate, patterns.publishDate);
   if(selectors.description)
     extracted.description = extractText(item, selectors.description, patterns.description);
-
-  if(extracted.number && extracted.description && extracted.openDate)
+  if(selectors.link)
     extracted.link = extractLink(item, selectors.link);
   else
     return {};
