@@ -1,3 +1,10 @@
+
+
+console.log(new Date('2016-10-21'));
+
+
+
+
 var mongoose = require('mongoose');
 
 mongoose.Promise = global.Promise;
