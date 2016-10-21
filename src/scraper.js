@@ -15,6 +15,8 @@ var
     iconv               = require('iconv-lite'),
     // Lodash is used to simplify common operations
     _                   = require('lodash'),
+    // To parse dates, etc
+    moment              = require('moment'),
     // Request is the main request library used when requesting websites
     request             = require('request'),
     // Used to resolve some uris
@@ -25,7 +27,9 @@ var
     // EventEmitter is used to emit events while scraper is working,
     // I used this to keep track of progress.
     EventEmitter        = require('events').EventEmitter;
-	
+    
+    
+moment.locale('pt-BR');
 	
 // Object.assign polyfill (needed to work with Openshift Node version)
 var objectAssign        = require('object-assign');
@@ -1473,6 +1477,8 @@ function extractLink(item, selector) {
     }
     else {
       // TODO(diego): Diagnostic
+      // Not a link, set empty for now
+      link = '';
     }
   }
   else {
@@ -1562,11 +1568,11 @@ function convertToDate(delimiter, string) {
   if(parts.length === 3) {
     // TODO(diego): Do more checks here...
     var year  = Number(parts[2]),
-        month = Number(parts[1]),
-        day   = Number(parts[0]);
+        month = addZero(Number(parts[1])),
+        day   = addZero(Number(parts[0]));
         
-    var dateString = year + '/' + month + '/' + day;
-    return new Date(dateString);    
+    var dateString = year + '-' + month + '-' + day;
+    return moment(dateString).hours(3).format();  
   }
 
   return undefined;
@@ -1589,6 +1595,13 @@ function startsWith(strA, strB) {
 
 function endsWith(strA, strB) {
 	return new RegExp(strB + "$").test(strA);
+}
+
+function addZero(i) {
+  if (i < 10)
+    i = '0'  + i;
+    
+  return i;
 }
 
 module.exports = TNMScraper;
