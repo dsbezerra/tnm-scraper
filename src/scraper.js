@@ -1347,6 +1347,7 @@ function extractContent(stats, options, task, $) {
           else {
             // TODO(diego): Check here if we have modifications
             // For now, just log that.
+            console.log(LAST_RESULTS.results[content._hash]);
             Log.i(_TAG, 'This item already exists in database!');
             
           }
