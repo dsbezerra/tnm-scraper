@@ -1560,8 +1560,8 @@ function convertToDate(delimiter, string) {
   if(parts.length === 3) {
     // TODO(diego): Do more checks here...
     
-    // NOTE(diego): For some unknown reason we need to subtract 1 from month
-    // to match correctly the month, but in OpenShift we don't...
+    // NOTE(diego): We need to subtract 1 to match the month, but for some
+    // unknown reason in OpenShift we don't...
     var year  = Number(parts[2]),
         month = Number(parts[1]),
         day   = Number(parts[0]);

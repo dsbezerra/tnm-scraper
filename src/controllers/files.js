@@ -66,7 +66,8 @@ exports.process = function(req, res) {
       var destPath = DATA_DIR + randomName + '.' + format;
 
       updateTask(taskId, {
-        message: 'Baixando arquivo...'
+        message: 'Baixando arquivo...',
+        running: true,
       });
 
       networkutils.downloadFile(uri, destPath, function(err) {
@@ -80,13 +81,15 @@ exports.process = function(req, res) {
 
         updateTask(taskId, {
           code: RESULT_CODE.SUCCESS_DOWNLOAD,
-          message: 'Arquivo baixado.'
+          message: 'Arquivo baixado.',
+          running: true,
         });
 
         if (isCompressed(format)) {
           var decompressor = new Decompressor(destPath);
           updateTask(taskId, {
-            message: 'Extraindo arquivo...'
+            message: 'Extraindo arquivo...',
+            running: true,
           });
           decompressor.exec(function(err, decompressed) {
             if (!err) {
@@ -112,6 +115,7 @@ exports.process = function(req, res) {
             else {
               updateTask(taskId, {
                 running: false,
+                message: 'Erro ao extrair arquivos',
                 code: RESULT_CODE.ERROR_EXTRACTION
               });
             }

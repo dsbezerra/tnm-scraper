@@ -39,7 +39,8 @@ function UnRAR(path) {
   if (!fileutils.exists(TMP_DIR))
     fileutils.createDirectory(TMP_DIR);
 
-  /*fs.chmodSync(UNRAR_PATH, 777);
+  fs.chmodSync(UNRAR_PATH, 777);
+  /*
   fs.chmodSync(DATA_DIR, 777);
   fs.chmodSync(TMP_DIR, 777);*/
 
