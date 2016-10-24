@@ -62,13 +62,13 @@ UnZIP.prototype.extract = function(callback) {
     var name = fileutils.getNameFromPath(self.filePath);
     var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
 	
-	var COMMAND = 'unzip ' + self.filePath + ' -d ' + result.destPath;
-    var child = exec(COMMAND, function(error, stdout, stderr) {
-      if (error) {
-        console.error('exec error: ' + error);
-        return callback(error);
-      }
-    });
+  	var COMMAND = 'unzip ' + self.filePath + ' -d ' + result.destPath;
+      var child = exec(COMMAND, function(error, stdout, stderr) {
+        if (error) {
+          console.error('exec error: ' + error);
+          return callback(error);
+        }
+      });
 
     // Close event
     child.on('close', function(code) {

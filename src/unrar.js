@@ -36,8 +36,8 @@ function UnRAR(path) {
 
   self.filePath = path;
 
-  if (!fileutils.exists(TMP_DIR))
-    fileutils.createDirectory(TMP_DIR);
+  /*if (!fileutils.exists(TMP_DIR))
+    fileutils.createDirectory(TMP_DIR);*/
 
   /*fs.chmodSync(UNRAR_PATH, 777);
   fs.chmodSync(DATA_DIR, 777);
@@ -62,13 +62,13 @@ UnRAR.prototype.extract = function(callback) {
     var name = fileutils.getNameFromPath(self.filePath);
     var result = fileutils.createDirectoryAt(TMP_DIR, name, false);
 
-	var COMMAND = ' e -ai ' + self.filePath + ' ' + result.destPath;
-    var child = exec(UNRAR_PATH + COMMAND, function(error, stdout, stderr) {
-      if (error) {
-        console.error('exec error: ' + error);
-        return callback(error);
-      }
-    });
+  	var COMMAND = ' e -ai ' + self.filePath + ' ' + result.destPath;
+      var child = exec(UNRAR_PATH + COMMAND, function(error, stdout, stderr) {
+        if (error) {
+          console.error('exec error: ' + error);
+          return callback(error);
+        }
+      });
 
     // Close event
     child.on('close', function(code) {
