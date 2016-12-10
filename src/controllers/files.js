@@ -172,7 +172,7 @@ exports.process = function(req, res) {
       });
     }
     // If we already have this file extracted
-    else if (id && filename && format && fileIndex) {
+    else if (id && filename && format && fileIndex >= 0) {
       var filepaths = fileutils.getFilePathsFromDirectory(TMP_DIR + id, true);
       var path = filepaths[fileIndex];
       if (isWordDocument(format)) {
