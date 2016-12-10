@@ -238,22 +238,18 @@ ScraperAPI.prototype.getScraperByCity = function(req, res) {
 ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
   var id = req.params.id;
   if (id) {
-    Result.find({
-      scraper: id,
-      approved: false
-    }, {
-      __v: false
-    }, function(err, pending) {
-      if (err) {
-        return res.status(500)
-          .send(makeError(err.message,
-            err.code));
-      }
-      
-      console.log(pending);
-
-      return res.send(makeResponse(true, pending));
-    });
+    Result
+      .find({ scraper: id, approved: false }, { __v: false })
+      .sort({ openDate: 1 })
+      .exec(function(err, pending) {
+        if(err) {
+          return res.status(500)
+                    .send(makeError(err.message,
+                                    err.code));
+        }
+        
+        return res.send(makeResponse(true, pending));
+      });
   } 
   else {
     return res.status(500).

@@ -1,9 +1,9 @@
 #!/bin/env node
+
 const express      = require('express');
 const bodyParser   = require('body-parser');
 const compression  = require('compression');
 const logger       = require('morgan');
-
 
 const FilesController = require('./src/controllers/files');
 const ScraperAPI = require('./api');
