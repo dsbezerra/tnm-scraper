@@ -13,6 +13,7 @@ var result = new Schema({
   agency: String,
   openDate: Date,
   publishDate: Date,
+  extractionDate: Date,
   description: String,
   amount: { type: Number, default: 0 },
   approved: { type: Boolean, default: false },
@@ -30,9 +31,9 @@ var result = new Schema({
     fileFormat: String
   },
   processed: {
-	  uri: String,
-	  fileName: String,
-	  fileFormat: String
+    uri: String,
+    fileName: String,
+    fileFormat: String
   }
 }, { autoIndexID: true });
 
