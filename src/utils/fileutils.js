@@ -120,10 +120,10 @@ function createDirectoryAt(path, name, random) {
 
   var finalPath = path;
   if(endsWith(path, '/')) {
-	  finalPath += dirname;
+    finalPath += dirname;
   }
   else {
-	  finalPath += '/' + dirname;
+    finalPath += '/' + dirname;
   }
   
   fs.mkdirSync(finalPath);

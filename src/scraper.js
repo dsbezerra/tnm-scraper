@@ -15,8 +15,6 @@ var
     iconv               = require('iconv-lite'),
     // Lodash is used to simplify common operations
     _                   = require('lodash'),
-    // To parse dates, etc
-    moment              = require('moment'),
     // Request is the main request library used when requesting websites
     request             = require('request'),
     // Used to resolve some uris
@@ -27,16 +25,17 @@ var
     // EventEmitter is used to emit events while scraper is working,
     // I used this to keep track of progress.
     EventEmitter        = require('events').EventEmitter;
-    
-    
-moment.locale('pt-BR');
-	
+    	
 // Object.assign polyfill (needed to work with Openshift Node version)
 var objectAssign        = require('object-assign');
 
 // Logger util
 var logger              = require('./logger');
-    
+
+// Extraction utilities
+var extractNotice       = require('./extraction/extractNotice');
+var extractText         = require('./extraction/extractText');    
+
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
 var USER_AGENTS = [
@@ -88,33 +87,6 @@ var Log = null;
 var TAG = 'Scraper';
 
 var VERBOSE = false;
-
-//
-// Modalities possible names. 
-// Used when converting String -> Number
-//
-var MODALITIES = {
-  'pp'                   : 0,
-  'pregão presencial'    : 0,
-  
-  'pe'                   : 1,
-  'pregão eletrônico'    : 1,
-
-  'concorrência'         : 2,
-  'concorrência pública' : 2,
-  'cp'                   : 2,
-  
-  'convite'              : 3,
-  
-  'concurso'             : 4,
-
-  'leilão'               : 5,
-
-  'tomada de preço'      : 6,
-  'tomada de preços'     : 6,
-
-  'convênio'             : 7
-};
 
 // 
 // Minimum delay possible between each request.
@@ -312,7 +284,9 @@ TNMScraper.prototype.init = function(options) {
 
   if(options.scraper) {
     self.scraper = options.scraper;
-    LAST_RESULTS = options.scraper.lastResults;
+    if(options.scraper.lastResults) {
+      LAST_RESULTS = options.scraper.lastResults;
+    }
   }
 
   self.request = self.request.defaults(requestDefaults);
@@ -436,7 +410,7 @@ TNMScraper.prototype.getSession = function(nextTask) {
       uri: options.baseURI
     };
     
-    if(task.request.getURI) {
+    if(task.request && task.request.getURI) {
       requestParams.uri = options.baseURI + task.request.getURI;
     }
 
@@ -557,11 +531,12 @@ TNMScraper.prototype.scrapeDetails = function(nextTask) {
       }
 
       var notice = extractNotice(page['$'], task.selectors, task.patterns, page.uri);
-      
+     
       if(notice) {
         // Pass hash to final model
         notice._hash = content._hash;
         notice.website = page.uri;
+        notice.extractionDate = new Date();
         //self.emitAsync('notice', notice);
         next(null, notice);
       }
@@ -934,50 +909,6 @@ TNMScraper.prototype.updateStat = function(newStat) {
 }
 
 /**
- * Needs refactor
- */
-function extractNotice(cheerio, selectors, patterns, currentURI) {
-  var $ = cheerio;
-
-  if(!patterns) {
-    patterns = {};
-  }
-
-  var container = selectors.container ? $(selectors.container) : $('body'); 
-  
-  var result = {
-    description: extractText(container, selectors.description, patterns.description),
-    modality: extractText(container, selectors.modality, patterns.modality),
-    download: extractDownloadInfo(selectors.link, currentURI, container, $),
-    agency: extractText(container, selectors.agency, patterns.agency),
-    number: extractText(container, selectors.number, patterns.number),
-    // TODO(diego): A extractDate function
-    openDate: extractText(container, selectors.openDate, patterns.openDate),
-    publishDate: extractText(container, selectors.publishDate, patterns.publishDate)
-  };
-  
-  // Change modality from string to int
-  if(result.modality) {
-    result.modality = MODALITIES[result.modality.toLowerCase()];
-  }
-
-  if(result.openDate) {
-    result.openDate = convertToDateFormat(result.openDate);
-  }
-
-  if(result.publishDate) {
-    result.publishDate = convertToDateFormat(result.publishDate);
-  }
-  
-  if(!endsWith(result.description, '\\.')) {
-    result.description += '.';
-    
-  }
-  
-  return result;
-}
-
-/**
  * Check if a given string is a valid URL
  * @param {string} uri URL to be checked
  * @return {boolean} True if is valid and false if not
@@ -1010,20 +941,6 @@ function buildSelectorString(selector) {
   var name = element.attribute.name;
   var value = element.attribute.value;
   return tag + '[' + name + '=' + value + ']';
-}
-
-/**
- * Checks if is a valid download link/a valid filename
- * @param {string} string String to be checked
- */
-function isFileDownloadLink(string) {
-  if(!string) return false;
-  var test = string.toLowerCase();
-  return (
-    endsWith(test, '\\.pdf') || endsWith(test, '\\.doc') ||
-    endsWith(test, '\\.docx') || endsWith(test, '\\.zip') ||
-    endsWith(test, '\\.rar') || endsWith(test, '\\.odt')
-  );
 }
 
 /**
@@ -1077,96 +994,6 @@ function isFileDownloadLink(string) {
  
 function resolveRelativeURI(currentURI, relativeURI) {
   return url.resolve(currentURI, relativeURI);
-}
-
-/**
- * Extracts download information to a object
- * @param {string} selector Selector of the content
- * @param {object} $ Cheerio object
- * @return {object} A download info object
- *
- * download: {
- *   relativeUri: {string} Relative download URI
- *   uri: {string} Complete download URI
- *   fileName: {string} File name
- *   fileFormat: {string} File Format
- * }
- */
-function extractDownloadInfo(selector, currentURI, container, $) {
-
-  var element = $(selector);
-  var href = element.attr('href'); 
-  var text = element.text().trim();
-  var lowerCaseText = text.toLowerCase();
-
-  href = href.replace(/&amp;/g, '&');
-  
-  var info = {
-    relativeUri: href,
-    uri: resolveRelativeURI(currentURI, href)
-  };
-
-  if (isFileDownloadLink(text)) {
-    info.fileName = text;
-    info.fileFormat = text.substring(text.lastIndexOf('.') + 1);
-  }
-  else if (isFileDownloadLink(href)) {
-    info.fileName = href.substring(href.lastIndexOf('/') + 1);
-    info.fileFormat = href.substring(href.lastIndexOf('.') + 1);
-  }
-  else if (isJavascriptFunction(href)) {
-    var functionName = extractJavascriptFunctionNameFrom(href);
-  }
-  
-  return info;
-}
-
-// TODO(diego): Doc
-function execRegex(pattern, input) {
-
-  if(typeof pattern !== 'object') {
-    pattern = new RegExp(pattern);
-  }
-  
-  var result = input;
-  
-  if(typeof pattern !== 'undefined') {
-    if(Array.isArray(input)) {
-      for(var i = 0; i < input.length; i++) {
-        var match = pattern.exec(input);
-        if(match) {
-          // NOTE(diego): Do a loop here to record all matches,
-          // if it's necessary
-          result = match[0];
-          break;
-        }
-      }
-    }
-    else {
-
-      // Remove extra line spaces and line breaks
-      input = input.replace(/(\r\n|\n|\r|\s+)/gm, " ").replace(/\s{2,}/gm, "\n");
-
-      var match = pattern.exec(input);
-      if(match) {
-        if(match.length === 1) {
-          result = match[0];
-        }
-        else {
-          /*var matches = [];
-             for(var matchIndex = 0; matchIndex < match.length; ++matchIndex) {
-             matches.push(match[matchIndex]);
-             }
-             result = matches;
-           */
-
-          result = match[match.length - 1];
-        }
-      }
-    }    
-  }
-
-  return result;
 }
 
 // Works only with chars
@@ -1430,31 +1257,6 @@ function getHashOfContent(content) {
 }
 
 /**
- * Extracts the text from a item, using selector and/or regex,
- * use arrays to handle multiple selectors and patterns
- * @param {object} item HTML element
- * @param {String} selector Selector string of element
- * @param {String} pattern Pattern to be used when extracting text
- * @return {String} Extracted text
- */
-function extractText(item, selector, pattern) {
-  var text = '';
-
-  if(selector && pattern) {
-    text = getTrimText(item, selector);
-    text = execRegex(pattern, text);
-  }
-  else if (selector) {
-    text = getTrimText(item, selector);
-  }
-  else if (pattern) {
-    text = execRegex(pattern, getTrimText(item));
-  }
-
-  return text;
-}
-
-/**
  * Extracts link from element
  * @param {object} item HTML element
  * @param {String} selector Selector string of link
@@ -1489,32 +1291,6 @@ function extractLink(item, selector) {
 }
 
 /**
- * Returns the text from element trimmed.
- * @param {object} item HTML element
- * @param {String} selector Selector string of element
- * @return {String} Returns the text trimmed
- */
-function getTrimText(item, selector) {
-  var text = '';
-
-  if(_.isArray(selector)) {
-    for(var i = 0; i < selector.length; ++i) {
-      text = item.find(selector[i]).text().trim();
-      if(text)
-        break;
-    }
-  }
-  else if(selector) {
-    text = item.find(selector).text().trim();
-  }
-  else {
-    text = item.text().trim();
-  }
-
-  return text;
-}
-
-/**
  * Check if the href value is a doPostBack javascript call
  * and returns only the EVENTTARGET 
  * @param {String} href HREF attribute text value
@@ -1536,49 +1312,6 @@ function checkForDoPostBack(href) {
 }
 
 /**
- * Converts a string date to a Javascript date format.
- * @param {String} dateString A date in string format (DD-MM-YYYY or DD/MM/YYYY) 
- * @return {Date} A javascript date object if successfull, undefined if not
- */
-function convertToDateFormat(dateString) {
-  var date;
-
-  if(dateString.indexOf('/') > -1)
-    date = convertToDate('/', dateString);
-  else if(dateString.indexOf('-') > -1)
-    date = convertToDate('-', dateString);
-
-  return date;
-}
-
-/**
- * Converts a string date to a Javascript date format.
- * @param {String} delimiter A delimiter used when splitting the date
- * @param {String} string A date in string format
- * @return {Date} Returns a javascript date if sucessfull, undefined if not.
- */
-function convertToDate(delimiter, string) {
-  if(!string)
-    return undefined;
-
-  if(!delimiter)
-    return undefined;
-
-  var parts = string.split(delimiter);
-  if(parts.length === 3) {
-    // TODO(diego): Do more checks here...
-    var year  = Number(parts[2]),
-        month = addZero(Number(parts[1])),
-        day   = addZero(Number(parts[0]));
-        
-    var dateString = year + '-' + month + '-' + day;
-    return moment(dateString).hours(3).format();  
-  }
-
-  return undefined;
-}
-
-/**
  * Create a tag for a subroutine in code
  * @param {String} name Name of the subroutine
  * return {String} A tag name
@@ -1591,17 +1324,6 @@ function createTag(name) {
 
 function startsWith(strA, strB) {
   return strA.indexOf(strB) === 0;
-}
-
-function endsWith(strA, strB) {
-	return new RegExp(strB + "$").test(strA);
-}
-
-function addZero(i) {
-  if (i < 10)
-    i = '0'  + i;
-    
-  return i;
 }
 
 module.exports = TNMScraper;

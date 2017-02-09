@@ -10,7 +10,6 @@ var Scraper = require('./src/models/scraper');
 var Result = require('./src/models/result');
 
 var fileutils = require("./src/utils/fileutils");
-var networkutils = require('./src/utils/networkutils');
 
 var scrape = require('./index');
 

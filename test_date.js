@@ -1,7 +1,5 @@
+var request = require('./src/network/request');
 
-
-console.log(new Date('2016-10-21'));
-
-console.log(new Date('2016/10/21'));
-
-console.log(new Date(Date.UTC(2016, 10, 21)));
+request.checkValidWebsite('daksdjaskd', function(result) {
+  console.log(result);
+});

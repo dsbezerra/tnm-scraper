@@ -26,6 +26,16 @@ app.get('/', function(req, res) {
 });
 
 
+// TODO(diego): Remove these file endpoints.
+//
+// *DOC*
+// method - POST
+// desc - Process a file and extracts or convert to pdf
+// endpoint - /files/process
+app.post('/files/process', FilesController.process);
+app.post('/files/checkProgress', FilesController.checkProgress);
+
+
 //[Scraper]
 //
 // *DOC*
@@ -75,15 +85,6 @@ app.get('/scrapers/pending/:id', scraperApi.getPendingFromScraper);
 app.get('/scrapers/checkProgress/:id', function(req, res) {
   scraperApi.checkProgress.apply(scraperApi, [req, res]);
 });
-
-//
-// *DOC*
-// method - POST
-// desc - Process a file and extracts or convert to pdf
-// endpoint - /files/process
-app.post('/files/process', FilesController.process);
-
-app.post('/files/checkProgress', FilesController.checkProgress);
 
 // Inserts a scraper
 app.post('/scrapers', scraperApi.insertScraper);
