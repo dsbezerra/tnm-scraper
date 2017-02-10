@@ -33,8 +33,11 @@ var objectAssign        = require('object-assign');
 var logger              = require('./logger');
 
 // Extraction utilities
+var checkForDoPostBack  = require('./extraction/checkForDoPostBack');
+
+var extractLink         = require('./extraction/extractLink');
 var extractNotice       = require('./extraction/extractNotice');
-var extractText         = require('./extraction/extractText');    
+var extractText         = require('./extraction/extractText');
 
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
@@ -655,69 +658,6 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   }
 }
 
-/**
- * OLD Resolve links (not used anymore) 
- */
-TNMScraper.prototype._resolveLinks = function(links, page, uri, callback) {
-  var self = this;
-  var stats = self.stats;
-  
-  var linkIndex = 0;
-  var isASPNet = self.aspnet;
-  
-  if(!isUriValid(links[0])) {
-    async.whilst(
-      function() { return linkIndex < links.length; },
-      function(next) {
-        if(isASPNet) {
-          var requestParams = {
-            method: 'POST',
-            uri: uri,
-            headers: defaultHeaders
-          };
-
-          var form = getAspNetFormData(page, links[linkIndex]);
-          requestParams.form = form;
-
-          self.performRequest(requestParams, function(err, page) {
-            if(err) {
-              return callback(err, null);
-            }
-
-            links[linkIndex] = page.uri;
-            linkIndex++;
-            next();
-          });
-        }
-        else {
-          links[linkIndex] = resolveRelativeURI(page.uri, links[linkIndex]);
-          linkIndex++;
-          next();
-        }
-      },
-      function(err) {
-        if(err) return self.handleError(err);
-        return callback(null, links);
-      }
-    );
-  }
-  else {
-    
-    var task = self.routine[stats.currentTask];
-    if(task.request && task.request.baseURI) {
-      while(linkIndex < links.length) {
-        var baseURI = task.request.baseURI;
-        links[linkIndex] = baseURI + links[linkIndex++];
-      }
-    }
-    else {
-      // TODO(diego): See what we can do here...
-    }
-
-    callback(null, links);
-  }
-}
-
 /* Handles the pagination change */
 TNMScraper.prototype.handlePagination = function (callback) {
   var self = this;
@@ -996,85 +936,6 @@ function resolveRelativeURI(currentURI, relativeURI) {
   return url.resolve(currentURI, relativeURI);
 }
 
-// Works only with chars
-function getIndexOf(char, string) {
-  var index = 0;
-  while(true) {
-    var c = string.charAt(index);
-    if(c == char)
-      return index;
-
-    if(index == string.length - 1)
-      return -1;
-    
-    ++index;
-  }
-}
-
-function getNIndexOf(char, string, count) {
-  var counter = 0;
-  var index = 0;
-  while(true) {
-    var c = string.charAt(index);
-    if(c == char) {
-      ++counter;
-    }
-
-    if(counter == count) {
-      return index;
-    }
-
-    if(index == string.length - 1 && counter != count) {
-      return -1;
-    }
-
-    ++index;
-  }
-}
-
-// Works only with chars
-function getLastIndexOf(char, string) {
-  var charIndex = 0;
-  var index = 0;
-  while(true) {
-    var c = string.charAt(index);
-    if(c == char) {
-      charIndex = index;
-    }
-    else if (index == string.length - 1) {
-      return  charIndex || -1;
-    }
-
-    ++index;
-  }
-}
-
-function getSubStringBetween(char, string) {
-  var result = '';
-  var index = 0;
-  var copying = false;
-  while(true) {
-    var c = string.charAt(index);
-
-    if(copying && c != char) {
-      result += c;
-    }
-    
-    if(c == char) {
-      if(copying) {
-        copying = false;
-        break;
-      }
-      
-      copying = true;
-    }
-    
-    ++index;
-    
-  }
-  return result;
-}
-
 /**
  * Extract ASP.NET form data (some sites use this system when handling forms)
  * @param {object} cheerio Cheerio loaded body
@@ -1254,61 +1115,6 @@ function getHashOfContent(content) {
   Log.d(TAG, 'MD5: ' + hash);
 
   return hash;
-}
-
-/**
- * Extracts link from element
- * @param {object} item HTML element
- * @param {String} selector Selector string of link
- * @return {String} Returns the link
- */
-function extractLink(item, selector) {
-  var link = '';
-  if(!selector) {
-    link = item.find('a');
-  }
-  else {
-    link = item.find(selector);
-  }
-
-  if(link) {
-    var href = link.attr('href');
-    if(href) {
-      href = checkForDoPostBack(href);
-      link = href;
-    }
-    else {
-      // TODO(diego): Diagnostic
-      // Not a link, set empty for now
-      link = '';
-    }
-  }
-  else {
-    // TODO(diego): Diagnostic
-  }
-
-  return link;
-}
-
-/**
- * Check if the href value is a doPostBack javascript call
- * and returns only the EVENTTARGET 
- * @param {String} href HREF attribute text value
- * @return {boolean} True if contains __doPostBack and false if not
- */
-function checkForDoPostBack(href) {
-
-  if(!href) {
-    return null;
-  }
-  
-  var doPostBackIndex = href.indexOf('__doPostBack');
-  if(doPostBackIndex < 0)
-    return href;
-
-  var value = getSubStringBetween("'", href);
-  //value = value.replace(/\$/g, '_');
-  return value;
 }
 
 /**
