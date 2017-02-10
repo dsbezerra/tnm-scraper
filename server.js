@@ -45,6 +45,15 @@ app.post('/files/checkProgress', FilesController.checkProgress);
 //
 app.get('/scrapers', scraperApi.getScrapers);
 
+//[Scraper]
+//
+// *DOC*
+// method - GET
+// desc - Get the 5 last run scrapers
+// endpoint - /scrapers/last
+//
+app.get('/scrapers/last', scraperApi.getLastRunScrapers);
+
 // *DOC*
 // method - GET
 // desc - Get all running scrapers

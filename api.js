@@ -180,6 +180,27 @@ ScraperAPI.prototype.getScrapers = function(req, res) {
 }
 
 /**
+ * GET /scrapers/last
+ * Returns last 5 run scrapers
+ */
+ScraperAPI.prototype.getLastRunScrapers = function(req, res) {
+
+  Scraper
+    .find({}, { __v: false })
+    .limit(5)
+    .sort({ lastRunDate: -1 })
+    .exec(function(err, scrapers) {
+      if (err) {
+        return res.status(500)
+                  .send(makeError(err.message,
+                                  err.code));
+      }
+
+      return res.send(makeResponse(true, scrapers));
+    });
+}
+
+/**
  * GET /scrapers/:id
  * Returns the scraper that matches id
  */
