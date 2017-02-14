@@ -13,7 +13,7 @@
         "postURI": "?secao=licitacao_busca",
         "method": "POST",
         "form": {
-          "modalidade": 0,
+          "modalidade": 11,
           "ordenacao": "lipr.lipr_data",
           "periodo_inicio": "10/09/2016"
         }
@@ -21,7 +21,8 @@
       "list": true,
       "selectors": {
         "container": "body > div.quem_somos > div:nth-child(3)",
-        "link": "div.link_noticias"
+        "listItem": "div.link_noticias",
+				"link": "a"
       }
     },
     {
@@ -32,14 +33,14 @@
         "method": "GET"
       },
       "selectors": {
-        "modality": "body > div.quem_somos > div > div:nth-child(2) > div > h1",
+        "modality": "div.identificador_secao",
         "link": "body > div.quem_somos > div a[target='_blank']",
-	"container": "body > div.quem_somos > div"
+	      "container": "body > div.quem_somos > div"
       },
       "patterns": {
-        "date": "\\d{2}\/\\d{2}\\/\\d{4}",
+        "openDate": "(?:Data da sessão\\:\\s*)(\\d{2}\\/\\d{2}\\/\\d{4})",
         "agency": "(?:Órgão) (?:Licitante|Solicitante): ([A-Z]*)",
-        "description": "(?:Objeto): (.*)(?:Informações Complementares:)",
+        "description": "(?:Objeto\\:\\s*)(.*\\r*\\n*)",
         "number": "(?:Número): (\\d{1,}\/\\d{4})"
       }
     }

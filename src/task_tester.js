@@ -3,8 +3,13 @@
 var cheerio             = require('cheerio');
 var objectAssign        = require('object-assign');
 var request             = require('request');
+var iconv               = require('iconv-lite');
 
-var extractNotice       = require('./extraction/extractNotice');
+var extractMinimumContent  = require('./extraction/extractMinimumContent');
+var extractNotice          = require('./extraction/extractNotice');
+var extractText            = require('./extraction/extractText');
+
+var getAspNetFormData      = require('./extraction/getAspNetFormData');
 
 function TaskTest(options) {
 
@@ -12,6 +17,9 @@ function TaskTest(options) {
 
   self.testURL = null;
   self.page = null;
+
+  self.aspNetForm = null;
+  
   self.config = null;
 
   self.onFinish = null;
@@ -54,26 +62,95 @@ TaskTest.prototype.init = function(options) {
   }
 }
 
+
 function requestPage (taskTest, finishCallback) {
-  
-  var options = {
-    method: 'GET',
-    url: taskTest.testURL,
+
+  var config = taskTest.config;
+
+  var options = {};
+
+  if (config.request) {
+    options.url = taskTest.testURL;
+    options.method = config.request.method || 'GET';
+    options.form = config.request.form || {};  
+  }
+
+  var requestDefaults = {
+    jar: true,
+    followAllRedirects: true,
   };
+
+  if (config.charset) {
+    requestDefaults.encoding = null;
+  }
   
-  request(options, function(err, response, body) {
-    if (!err && response.statusCode === 200) {
-      //
-      // Decode body first?
-      //
-      taskTest.page = cheerio.load(body);
-    }
+  request = request.defaults(requestDefaults);
+
+  if (config.aspnet && !taskTest.aspNetForm) {
+
+    console.log('Getting ASP.NET form data.');
+    
+    //
+    // If we need to get all aspnet form parameters
+    //
+    request({
+      url: taskTest.testURL,
+      method: 'GET',
+    }, function(err, response, body) {
+      if (!err && response.statusCode === 200) {
+        var $ = cheerio.load(body);
+        taskTest.aspNetForm = getAspNetFormData($);
+
+        //
+        // Now that we have the values, call again requestPage so we can do the main request
+        //
+        requestPage(taskTest, finishCallback);
+      }
+      else {
+        console.log(err);
+      }
+      
+    });
+    
+  }
+  else {
 
     //
-    // Callback to begin testing selectors and patterns
+    // If we have aspnet form params, merge with options form object
     //
-    finishCallback && finishCallback(taskTest);
-  });
+    if (taskTest.aspNetForm) {
+      objectAssign(options.form, taskTest.aspNetForm);
+    }
+    
+    console.log('Requesting main page.');
+    
+    request(options, function(err, response, body) {
+      if (!err && response.statusCode === 200) {
+        if (config.charset) {
+          taskTest.page = cheerio.load(iconv.decode(body, 'iso-8859-1'), {
+            decodeEntities: false
+          });
+
+          console.log(taskTest.page.html());
+          
+          console.log('Decoded body loaded.');
+        }
+        else {
+          taskTest.page = cheerio.load(body);
+          console.log('Undecoded body loaded.');
+        }
+      }
+      else {
+        console.log(err);
+      }
+
+      //
+      // Callback to begin testing selectors and patterns
+      //
+      finishCallback && finishCallback(taskTest);
+    });
+  }
+  
 }
 
 function onRequestPageFinished(taskTest) {
@@ -98,8 +175,65 @@ function onRequestPageFinished(taskTest) {
   }
 }
 
-function handleGetLinksTask() {
-  console.log('handleGetLinksTask');
+function handleGetLinksTask(taskTest) {
+
+  var config = taskTest.config;
+
+  var selectors = config.selectors;
+  var patterns = config.patterns;
+
+  var root = selectors.container || 'body';
+
+  var result = {
+    hasNextPage: false,
+    hasPrevPage: false,
+    links: [],
+  };
+
+  var $ = taskTest.page;
+
+  var container = $(root);
+
+  if (container) {
+    
+    if (config.pagination) {
+      if (selectors.nextPage) {
+        result.hasNextPage = !!$(selectors.nextPage);
+      }
+      
+      if (selectors.prevPage) {
+        result.hasPrevPage = !!$(selectors.prevPage);
+      }
+    }
+
+    if (config.list && selectors.listItem) {
+      
+      //
+      // Find all items in the list
+      //
+      var items = container.find(selectors.listItem);
+      
+      //
+      // Loop through all items found and extract the minimum content possible
+      //
+      for(var i = 0; i < items.length; ++i) {
+        var item = $(items[i]);
+        var content = extractMinimumContent(item, selectors, patterns);
+
+        if (content.link) {
+          result.links.push(content.link);
+        }
+        
+        //console.log(content);
+      }
+    }
+    else {
+      
+    }
+    
+  }
+
+  taskTest.onFinish && taskTest.onFinish(null, result);
 }
 
 function handleGetDetailsTask(taskTest) {
@@ -139,23 +273,49 @@ function testTask(testURL, taskType, config, finishCallback) {
 
 
 var taskTest = testTask(
-  'http://e-negocioscidadesp.prefeitura.sp.gov.br/DetalheLicitacao.aspx?l=9VP%2fUsQUNEs%3d',
-  'GET_DETAILS',
+  'http://e-negocioscidadesp.prefeitura.sp.gov.br/BuscaLicitacao.aspx',
+  'GET_LINKS',
   {
+    "aspnet": true,
+    "charset": "iso-8859-1",
+    "request": {
+      "postURI": "BuscaLicitacao.aspx",
+      "method": "POST",
+      "form": {
+        "__EVENTTARGET": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$ddlArea": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$ddlSecretaria": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$ddlModalidade": 9,
+        "ctl00$cphConteudo$frmBuscaLicitacao$ddlStatus": 1,
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtLicitacao": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtProcesso": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtDataPublicacaoInicio": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtDataPublicacaoFim": "",
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtDataAberturaSessaoInicio": "14/10/2016",
+        "ctl00$cphConteudo$frmBuscaLicitacao$txtDataAberturaSessaoFim": "14/10/2017",
+        "ctl00$cphConteudo$frmBuscaLicitacao$ibtBuscar.x": 23,
+        "ctl00$cphConteudo$frmBuscaLicitacao$ibtBuscar.y": 6
+      }
+    },
+    "list": true,
+    "pagination": true,
     "selectors": {
-      "modality": "#ctl00_cphConteudo_frmDetalheLicitacao_lblModalidade",
-      "agency": "#ctl00_cphConteudo_frmDetalheLicitacao_lblOrgao",
-      "number": "#ctl00_cphConteudo_frmDetalheLicitacao_lblNumeroPublicacao",
-      "openDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblAberturaSessao",
-      "publishDate": "#ctl00_cphConteudo_frmDetalheLicitacao_lblDataPublicacao",
-      "description": "#ctl00_cphConteudo_frmDetalheLicitacao_lblObjeto",
-      "link": "#ctl00_cphConteudo_frmDetalheLicitacao_lnkDownloadEdital"
+      "container": "#ctl00_cphConteudo_gdvResultadoBusca_gdvContent",
+      "listItem": "tr",
+      "link": "a",
+      "number": "td:nth-child(1)",
+      "agency": "td:nth-child(2)",
+      "modality": "td:nth-child(3)",
+      "openDate": "td:nth-child(4)",
+      "description": "td:nth-child(5)",
+      "nextPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrNext_lbtText",
+      "prevPage": "#ctl00_cphConteudo_gdvResultadoBusca_pgrGridView_btrPrev_lbtText"
     },
     "patterns": {
-      "openDate": "\\d{2}\/\\d{2}\\/\\d{4}",
-      "publishDate": "\\d{2}\/\\d{2}\\/\\d{4}"
+      "openDate": "\\d{2}\/\\d{2}\\/\\d{4}"
     }
-  }, function(err, result) {
+  }
+  , function(err, result) {
     console.log(result);
   }
 );

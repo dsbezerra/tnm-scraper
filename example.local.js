@@ -10,13 +10,13 @@ const config = {
 }
 
 // It's the same as
-const configPath = path.join('scrapers', '57e37574557630001122e841.json');
+const configPath = path.join('scrapers', 'ba/salvador/config.json');
 
 
 // In the first way 'scraperPath', if you want to add new options, you'll need to specify the options parameters
 // In the second way you can add any options outside of scraper and ignore the options parameter
 
-const scraper = scrape(config, function(err, result) {
+const scraper = scrape(configPath, function(err, result) {
   if(err) console.log(err);
   else {
     console.log(result);

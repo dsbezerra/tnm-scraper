@@ -647,7 +647,7 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
     if(task.request && task.request.baseURI) {
       while(contentIndex < contents.length) {
         var baseURI = task.request.baseURI;
-        contents[contentIndex].link = baseURI + contentIndex[contentIndex++].link;
+        contents[contentIndex].link = baseURI + contents[contentIndex++].link;
       }
     }
     else {
@@ -1018,14 +1018,15 @@ function extractContent(stats, options, task, $) {
   }
   
   if(task.list && container) {
-    if(selectors.listItem) {
+    if(selectors.listItem || selectors.link) {
 
-      var items = container.find(selectors.listItem);
-      
+      var items = container.find(selectors.listItem || selectors.link);
+
       for(var i = 0; i < items.length; ++i) {
         var item = $(items[i]);
         var content = extractMinimumContent(item, selectors, patterns);
         content._hash = getHashOfContent(content);
+
         if(content._hash) {
           // Here we check if the current item is one of the latest results found
           // by scraper. If true, we add to array of contents to be scraped, if false

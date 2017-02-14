@@ -14,12 +14,20 @@ function extractText(item, selector, pattern) {
   if(selector && pattern) {
     text = getTrimText(item, selector);
     text = execRegex(pattern, text);
+    //
+    // Trim after regex execution to make sure we are trimming the final text
+    //
+    text = text.trim();
   }
   else if (selector) {
     text = getTrimText(item, selector);
   }
   else if (pattern) {
-    text = execRegex(pattern, getTrimText(item));
+    text = execRegex(pattern, item.text());
+    //
+    // Same as above
+    //
+    text = text.trim();
   }
 
   return text;

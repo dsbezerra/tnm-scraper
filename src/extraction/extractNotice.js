@@ -37,30 +37,82 @@ var MODALITIES = {
   'convênio'             : 7
 };
 
+//
+// The function extract all notice possible information found at the page.
+// Receives a page object, selectors, patterns and a current uri as input
+// and outputs a result model object.
+// 
+
+// @param {object} contains a cheerio loaded body.
+// @param {object} selectors contain selectors used to find the wanted data.
+// @param {object} patterns contain regular expressions used to reduce data.
+// @param {string} currentURI used in link resolutions, so we can have absolute URL to files.
+// @return {object} A filled result model object if successfull, an empty if not. 
+// 
 function extractNotice(page, selectors, patterns, currentURI) {
   var $ = page;
 
   if (!selectors) selectors = {};
   if (!patterns) patterns = {};
 
+  //
+  // Use the provided container that contains all informations to be extracted
+  // If the configuration doesn't specify the container we then use the body selector.
+  //
+  // If we use body as container, most of the content will be extracted using regular expressions.
+  // That means that regular expressions must be well defined if we want to get correct data.
+  //
   var container = selectors.container ? $(selectors.container) : $('body'); 
   
   var result = {
+
+    //
+    // Extracts the text from description selectors/patterns
+    //
     description: extractText(container, selectors.description, patterns.description),
+
+    //
+    // Extracts the text from modality selectors/patterns
+    //
     modality: extractText(container, selectors.modality, patterns.modality),
-    download: extractDownloadInfo(selectors.link, currentURI, container, $),
+
+    //
+    // Extracts the text from agency selectors/patterns
+    // Can be only initials or the full name
+    //
     agency: extractText(container, selectors.agency, patterns.agency),
+    
+    //
+    // Extract the notice number as text from selectors/patterns
+    //
     number: extractText(container, selectors.number, patterns.number),
-    // TODO(diego): A extractDate function
+
+    //
+    // Extract the open date/session date of notice 
+    //
     openDate: extractText(container, selectors.openDate, patterns.openDate),
-    publishDate: extractText(container, selectors.publishDate, patterns.publishDate)
+
+    //
+    // Extract the publish date if the website provide it
+    //
+    publishDate: extractText(container, selectors.publishDate, patterns.publishDate),
+
+    //
+    // Extracts the download information from link selector
+    //
+    download: extractDownloadInfo(selectors.link, currentURI, container, $),
   };
-  
-  // Change modality from string to int
-  if(result.modality) {
+
+  //
+  // Converts modality text to number matching database enumeration
+  //
+  if (result.modality) {
     result.modality = MODALITIES[result.modality.toLowerCase()];
   }
 
+  //
+  // Convert date results from text to date format
+  //
   if(result.openDate) {
     result.openDate = convertToDateFormat(result.openDate);
   }
@@ -72,11 +124,11 @@ function extractNotice(page, selectors, patterns, currentURI) {
   return result;
 }
 
-/**
- * Converts a string date to a Javascript date format.
- * @param {String} dateString A date in string format (DD-MM-YYYY or DD/MM/YYYY) 
- * @return {Date} A javascript date object if successfull, undefined if not
- */
+//
+// Converts a string date to a Javascript date format.
+// @param {string} dateString A date in string format (DD-MM-YYYY or DD/MM/YYYY) 
+// @return {object} A javascript date object if successfull, undefined if not
+//
 function convertToDateFormat(dateString) {
   var date;
 
@@ -88,12 +140,12 @@ function convertToDateFormat(dateString) {
   return date;
 }
 
-/**
- * Converts a string date to a Javascript date format.
- * @param {String} delimiter A delimiter used when splitting the date
- * @param {String} string A date in string format
- * @return {Date} Returns a javascript date if sucessfull, undefined if not.
- */
+//
+// Converts a string date to a Javascript date format.
+// @param {string} delimiter A delimiter used when splitting the date
+// @param {string} string A date in string format
+// @return {object} Returns a javascript date if sucessfull, undefined if not.
+//
 function convertToDate(delimiter, string) {
   if(!string)
     return undefined;
@@ -115,6 +167,9 @@ function convertToDate(delimiter, string) {
   return undefined;
 }
 
+//
+// Add a left zero to a number below 10
+//
 function addZero(i) {
   if (i < 10)
     i = '0'  + i;
