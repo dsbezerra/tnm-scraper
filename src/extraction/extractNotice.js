@@ -43,7 +43,7 @@ var MODALITIES = {
 // and outputs a result model object.
 // 
 
-// @param {object} contains a cheerio loaded body.
+// @param {object} page contains a cheerio loaded body and another page info.
 // @param {object} selectors contain selectors used to find the wanted data.
 // @param {object} patterns contain regular expressions used to reduce data.
 // @param {string} currentURI used in link resolutions, so we can have absolute URL to files.

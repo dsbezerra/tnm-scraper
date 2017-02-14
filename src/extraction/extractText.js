@@ -1,13 +1,13 @@
 var _ = require('lodash');
 
-/**
- * Extracts the text from a item, using selector and/or regex,
- * use arrays to handle multiple selectors and patterns
- * @param {object} item HTML element
- * @param {String} selector Selector string of element
- * @param {String} pattern Pattern to be used when extracting text
- * @return {String} Extracted text
- */
+//
+// Extracts the text from a item, using selector and/or regex,
+// use arrays to handle multiple selectors and patterns
+// @param {object} item HTML element
+// @param {string} selector Selector string of element
+// @param {string} pattern Pattern to be used when extracting text
+// @return {string} Extracted text
+//
 function extractText(item, selector, pattern) {
   var text = '';
 
@@ -15,7 +15,7 @@ function extractText(item, selector, pattern) {
     text = getTrimText(item, selector);
     text = execRegex(pattern, text);
     //
-    // Trim after regex execution to make sure we are trimming the final text
+    // Trim again after regex execution to make sure we got the final text trimmed.
     //
     text = text.trim();
   }
@@ -23,7 +23,7 @@ function extractText(item, selector, pattern) {
     text = getTrimText(item, selector);
   }
   else if (pattern) {
-    text = execRegex(pattern, item.text());
+    text = execRegex(pattern, getTrimText(item));
     //
     // Same as above
     //
@@ -33,12 +33,12 @@ function extractText(item, selector, pattern) {
   return text;
 }
 
-/**
- * Returns the text from element trimmed.
- * @param {object} item HTML element
- * @param {String} selector Selector string of element
- * @return {String} Returns the text trimmed
- */
+//
+// Returns the text from element trimmed.
+// @param {object} item HTML element
+// @param {string} selector Selector string of element
+// @return {string} Returns the text trimmed
+//
 function getTrimText(item, selector) {
   var text = '';
 
