@@ -5,6 +5,8 @@ var objectAssign        = require('object-assign');
 var request             = require('request');
 var iconv               = require('iconv-lite');
 
+var resolveLinks           = require('./link_resolver').resolveLinks;
+
 var extractMinimumContent  = require('./extraction/extractMinimumContent');
 var extractNotice          = require('./extraction/extractNotice');
 var extractText            = require('./extraction/extractText');
@@ -16,7 +18,17 @@ function TaskTest(options) {
   var self = this;
 
   self.testURL = null;
-  self.page = null;
+
+  self.page = {
+    // Response body from request
+    body: null,
+    // Loaded HTML cheerio
+    loaded: null,
+    // Always store the last url
+    currentURI: null,
+  };
+
+  self.request = null;
 
   self.aspNetForm = null;
   
@@ -34,6 +46,8 @@ function TaskTest(options) {
 TaskTest.prototype.init = function(options) {
 
   var self = this;
+
+  console.log('Initializing task test...');
   
   if (options.taskType === 'GET_LINKS') {
     self.type = options.taskType;
@@ -56,6 +70,8 @@ TaskTest.prototype.init = function(options) {
   if (options.onFinish) {
     self.onFinish = options.onFinish;
   }
+
+  console.log('TESTING URL: %s\nTASK TYPE: %s\nASP.NET: %s', self.testURL, self.type, self.config.aspnet);
   
   if (self.testURL) {
     requestPage(self, onRequestPageFinished);
@@ -84,7 +100,7 @@ function requestPage (taskTest, finishCallback) {
     requestDefaults.encoding = null;
   }
   
-  request = request.defaults(requestDefaults);
+  taskTest.request = request.defaults(requestDefaults);
 
   if (config.aspnet && !taskTest.aspNetForm) {
 
@@ -93,7 +109,7 @@ function requestPage (taskTest, finishCallback) {
     //
     // If we need to get all aspnet form parameters
     //
-    request({
+    taskTest.request({
       url: taskTest.testURL,
       method: 'GET',
     }, function(err, response, body) {
@@ -121,22 +137,23 @@ function requestPage (taskTest, finishCallback) {
     if (taskTest.aspNetForm) {
       objectAssign(options.form, taskTest.aspNetForm);
     }
-    
-    console.log('Requesting main page.');
-    
-    request(options, function(err, response, body) {
-      if (!err && response.statusCode === 200) {
-        if (config.charset) {
-          taskTest.page = cheerio.load(iconv.decode(body, 'iso-8859-1'), {
-            decodeEntities: false
-          });
 
-          console.log(taskTest.page.html());
+    console.log('Requesting test page...');
+    taskTest.request(options, function(err, response, body) {
+      if (!err && response.statusCode === 200) {
+        
+        taskTest.page.currentURI = response.request.href;
+        taskTest.page.body = body;
+        
+        if (config.charset) {  
+          taskTest.page.loaded = cheerio.load(iconv.decode(body, 'iso-8859-1'), {
+            decodeEntities: false
+          });  
           
           console.log('Decoded body loaded.');
         }
         else {
-          taskTest.page = cheerio.load(body);
+          taskTest.page.loaded = cheerio.load(body);
           console.log('Undecoded body loaded.');
         }
       }
@@ -190,7 +207,7 @@ function handleGetLinksTask(taskTest) {
     links: [],
   };
 
-  var $ = taskTest.page;
+  var $ = taskTest.page.loaded;
 
   var container = $(root);
 
@@ -205,7 +222,7 @@ function handleGetLinksTask(taskTest) {
         result.hasPrevPage = !!$(selectors.prevPage);
       }
     }
-
+    
     if (config.list && selectors.listItem) {
       
       //
@@ -223,24 +240,38 @@ function handleGetLinksTask(taskTest) {
         if (content.link) {
           result.links.push(content.link);
         }
-        
-        //console.log(content);
       }
+
+      //
+      // Resolve links
+      //
+      resolveLinks(taskTest.request, result.links, taskTest.page,
+                   config.aspnet, function(err, resolved)
+      {
+        if (err) {
+          console.log(err);
+        }
+        else {
+          taskTest.onFinish && taskTest.onFinish(null, resolved);
+        }
+      });
+      
     }
     else {
-      
+      // TODO(diego): Complete
     }
     
   }
-
-  taskTest.onFinish && taskTest.onFinish(null, result);
 }
 
 function handleGetDetailsTask(taskTest) {
  
   var config = taskTest.config;
+
+  console.log('Extracting notice details...');
   var result = extractNotice(taskTest.page, config.selectors, config.patterns, null);
 
+  console.log('Finished extracting notice.');
   if (result) {
     taskTest.result = result;
     taskTest.onFinish && taskTest.onFinish(null, result);
@@ -270,7 +301,6 @@ function testTask(testURL, taskType, config, finishCallback) {
 
   return new TaskTest(options);
 }
-
 
 var taskTest = testTask(
   'http://e-negocioscidadesp.prefeitura.sp.gov.br/BuscaLicitacao.aspx',
@@ -316,7 +346,7 @@ var taskTest = testTask(
     }
   }
   , function(err, result) {
-    console.log(result);
+    //console.log(result);
   }
 );
 

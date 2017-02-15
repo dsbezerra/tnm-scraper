@@ -89,5 +89,31 @@ module.exports = {
 
       ++index;
     }
+  },
+  
+  /**
+   * Check if a given string is a valid URL
+   * @param {string} uri URL to be checked
+   * @return {boolean} True if is valid and false if not
+   */
+  isUriValid: function(text) {
+    if (typeof text !== 'string') {
+      return false;
+    }
+    else if (text.match(/(http|https|):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])?/)) {
+      return true;
+    }
+    else if (this.startsWith(text, '../') ||
+             this.startsWith(text, '/')   ||
+             this.startsWith(text, '?'))
+    {
+        return true;
+    }
+    
+    return false;   
+  },
+
+  startsWith: function(a, b) {
+    return a.indexOf(b) === 0;
   }
 }

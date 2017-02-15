@@ -33,11 +33,11 @@ var objectAssign        = require('object-assign');
 var logger              = require('./logger');
 
 // Extraction utilities
-var checkForDoPostBack  = require('./extraction/checkForDoPostBack');
-
-var extractLink         = require('./extraction/extractLink');
-var extractNotice       = require('./extraction/extractNotice');
-var extractText         = require('./extraction/extractText');
+var checkForDoPostBack      = require('./extraction/checkForDoPostBack');
+var extractLink             = require('./extraction/extractLink');
+var extractMinimumContent   = require('./extraction/extractMinimumContent');
+var extractNotice           = require('./extraction/extractNotice');
+var extractText             = require('./extraction/extractText');
 
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
@@ -849,28 +849,6 @@ TNMScraper.prototype.updateStat = function(newStat) {
 }
 
 /**
- * Check if a given string is a valid URL
- * @param {string} uri URL to be checked
- * @return {boolean} True if is valid and false if not
- */
-function isUriValid(uri) {
-  if(typeof uri !== 'string') {
-    return false;
-  }
-  else if(uri.match(/(http|https|):\/\/[\w-]+(\.[\w-]+)+([\w.,@?^=%&amp;:\/~+#-]*[\w@?^=%&amp;\/~+#-])?/)) {
-    return true;
-  }
-  else if(startsWith(uri, '../') ||
-          startsWith(uri, '/')   ||
-          startsWith(uri, '?'))
-    {
-      return true;
-    }
-
-  return false;
-}
-
-/**
  * Build a selector string 'tag[attributeName=attributeValue]'
  * @param {object} selector A selector object
  * @return {string} Return the selector string
@@ -1056,36 +1034,6 @@ function extractContent(stats, options, task, $) {
   }
   
   return contents;
-}
-
-/**
- * Extract the minimum content from a given HTML element
- * @param {object} item HTML element
- * @param {object} selectors Array of selectors to use when extracting content
- * @param {object} patterns Array of patterns to use when extracting content
- * @return {object} A minimum content object to use when hashing
- */
-function extractMinimumContent(item, selectors, patterns) {
-  var extracted = {};
-
-  if(selectors.modality)
-    extracted.modality = extractText(item, selectors.modality, patterns.modality);
-  if(selectors.agency)
-    extracted.agency = extractText(item, selectors.agency, patterns.agency);
-  if(selectors.number)
-    extracted.number = extractText(item, selectors.number, patterns.number);
-  if(selectors.openDate)
-    extracted.openDate = extractText(item, selectors.openDate, patterns.openDate);
-  if(selectors.publishDate)
-    extracted.publishDate = extractText(item, selectors.publishDate, patterns.publishDate);
-  if(selectors.description)
-    extracted.description = extractText(item, selectors.description, patterns.description);
-  if(selectors.link)
-    extracted.link = extractLink(item, selectors.link);
-  else
-    return {};
-  
-  return extracted;
 }
 
 /**
