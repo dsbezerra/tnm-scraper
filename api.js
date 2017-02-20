@@ -268,7 +268,7 @@ ScraperAPI.prototype.getScraperConfiguration = function(req, res) {
       if (configFile) {
         try {
           var config = JSON.parse(configFile);
-          return res.send(makeResponse(true, { config: config }));
+          return res.send(makeResponse(true, { id: id, config: config }));
         } catch (err) {
           return res.status(500).send(makeError('Config file JSON is incorrect!'));
         }
