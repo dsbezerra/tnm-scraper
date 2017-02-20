@@ -212,11 +212,11 @@ function removeDirectory(path) {
  * @param {String} path Path of file
  * @return {object} Buffer with file contents
  */
-function readFile(path) {
+function readFile(path, options) {
   var result = null;
   
   if(isFile(path)) {
-    result = fs.readFileSync(path);
+    result = fs.readFileSync(path, options);
   }
   
   return result;

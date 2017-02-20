@@ -253,6 +253,45 @@ ScraperAPI.prototype.getScraperByCity = function(req, res) {
 }
 
 /**
+ * GET /scrapers/:id/configuration
+ * Returns the scraper configuration
+ */
+ScraperAPI.prototype.getScraperConfiguration = function(req, res) {
+
+  var id = req.params.id;
+  if (id) {
+    var configPath = path.resolve('./scrapers');
+    var scraperConfigPath = path.join(configPath, id + '.json');
+
+    if (fileutils.isFile(scraperConfigPath)) {
+      var configFile = fileutils.readFile(scraperConfigPath, { encoding: 'utf8' });
+      if (configFile) {
+        try {
+          var config = JSON.parse(configFile);
+          return res.send(makeResponse(true, { config: config }));
+        } catch (err) {
+          return res.status(500).send(makeError('Config file JSON is incorrect!'));
+        }
+      }
+      else {
+        console.log('Couldn\'t read file!');
+        return res.status(500)
+                  .send(makeError('Couldn\t read file!'));
+      }
+    }
+    else {
+      console.log('Is not a file!');
+      return res.status(500)
+                .send(makeError('It is not a file!'));
+    }
+  }
+  else {
+    return res.status(500)
+      .send(makeError('Invalid params.'));
+  }
+}
+
+/**
  * GET /scrapers/pending/:id
  */
 ScraperAPI.prototype.getPendingFromScraper = function(req, res) {

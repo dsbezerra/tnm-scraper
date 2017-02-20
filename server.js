@@ -72,6 +72,14 @@ app.get('/scrapers/:id', scraperApi.getScraperById);
 //
 // *DOC*
 // method - GET
+// desc - Get scraper c onfiguration
+// endpoint - /scrapers/:id/configuration
+//
+app.get('/scrapers/:id/configuration', scraperApi.getScraperConfiguration);
+
+//
+// *DOC*
+// method - GET
 // desc - Get scrapers by city
 // endpoint - /scrapers/city/:id
 //
