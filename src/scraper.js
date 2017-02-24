@@ -39,6 +39,8 @@ var extractMinimumContent   = require('./extraction/extractMinimumContent');
 var extractNotice           = require('./extraction/extractNotice');
 var extractText             = require('./extraction/extractText');
 
+var stringutils             = require('./utils/stringutils');
+
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
 var USER_AGENTS = [
@@ -607,7 +609,7 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   // the remaining links doesn't need too;
   //
   var firstLink = contents[contentIndex].link;
-  if(!isUriValid(firstLink)) {
+  if(!stringutils.isUriValid(firstLink)) {
     async.whilst(
       function() { return contentIndex < contents.length; },
       function(next) {

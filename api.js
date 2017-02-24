@@ -70,6 +70,17 @@ ScraperAPI.prototype.runScraper = function(req, res) {
         var options = {
           scraper: scraper,
         };
+
+        if (scraper.running) {
+          //
+          // TODO(diego): Save task id to database while the scraper is running,
+          // so we can return the progress when we fall here.
+          //
+          return res.send({
+            success: false,
+            message: 'Scraper is already running!',
+          });
+        }
         
         var configPath = path.join('scrapers', scraper._id + '.json');
         var _scraper = scrape(configPath, options, function(err, results) {
@@ -125,6 +136,12 @@ ScraperAPI.prototype.runScraper = function(req, res) {
               delete self.progress[taskId];
               console.log('Removed ' + taskId + ' progress data!');
             }, 5000);
+
+          // Update in the database as not running
+          updateRunning(scraper, false, function(err, raw) {
+            if (err) {
+              console.log(err);
+            }
         });
         
         //
