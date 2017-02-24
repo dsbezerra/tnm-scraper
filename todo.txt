@@ -5,30 +5,34 @@
     / Partially done.
     * Done.
 
-Version v1.1.0
 - Add ignoring options
   - Ignore by properties (date, number, etc...)
+
 - Add support for initial date when requests
 - Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
   - Date wildcard
+
+* Minimal functionally to work.
+* Extraction of compressed archives
+  * ZIP format
+  * RAR format
+
+* Support ASPNET forms.
+* Support pagination (funcionando em são paulo)
+* Redo GetSession routine
+
+/-------------------------------------------------------------\
+
+NOT SCRAPER WORK BUT WILL BE USEFUL IN THE FUTURE 
+
+/ Conversion of documents to PDF
+  * DOC/DOCX format
+  - ODT format
+  
 - Add PDF merging functionality
 - Add PDF extracting content functionality
   - PDF.js or pdf2json handler
     - Extract estimated amount
     - Extract exclusivity
-  
-Version v1.0.0
 
-* Minimal functionally to work.
-
-* Extraction of compressed archives
-  * ZIP format
-  * RAR format
- 
-/ Conversion of documents to PDF
-  * DOC/DOCX format
-  - ODT format
-  
-* Support ASPNET forms.
-* Support pagination (funcionando em são paulo)
-* Redo GetSession routine
+\-------------------------------------------------------------/

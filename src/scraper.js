@@ -39,8 +39,6 @@ var extractMinimumContent   = require('./extraction/extractMinimumContent');
 var extractNotice           = require('./extraction/extractNotice');
 var extractText             = require('./extraction/extractText');
 
-var stringutils             = require('./utils/stringutils');
-
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
 var USER_AGENTS = [
@@ -567,6 +565,13 @@ TNMScraper.prototype.scrapeDetails = function(nextTask) {
       if(!self.results[TASK.GET_DETAILS]) {
         self.results[TASK.GET_DETAILS] = [];
       }
+
+      if (self.scraper) {
+        resultNotice.scraper = self.scraper._id;
+      }
+      
+      resultNotice.extracted = false;
+      resultNotice.ignored = false;
       
       self.results[TASK.GET_DETAILS].push(resultNotice);
 
