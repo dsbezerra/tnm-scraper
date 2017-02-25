@@ -1,3 +1,10 @@
+
+Version 1.0.1
+
+- Avoid empty configurations.
+- Support for dynamic strings in configuration.
+- Adds lastRunDate, today, nextYear as dynamic strings.
+
 Version 1.0
 
 - Minimal functionality to work.

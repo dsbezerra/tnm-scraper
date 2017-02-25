@@ -8,7 +8,7 @@
 - Add ignoring options
   - Ignore by properties (date, number, etc...)
 
-- Add support for initial date when requests
+- Add support for initial date when requesting
 - Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
   - Date wildcard
 

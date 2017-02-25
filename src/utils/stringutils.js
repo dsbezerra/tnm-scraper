@@ -115,5 +115,9 @@ module.exports = {
 
   startsWith: function(a, b) {
     return a.indexOf(b) === 0;
+  },
+
+  contains: function(a, b) {
+    return a.indexOf(b) > -1;
   }
 }

@@ -39,6 +39,8 @@ var extractMinimumContent   = require('./extraction/extractMinimumContent');
 var extractNotice           = require('./extraction/extractNotice');
 var extractText             = require('./extraction/extractText');
 
+var stringutils             = require('./utils/stringutils');
+
 // These user-agents will be handy in future to avoid request by the same User-Agent everytime the Scraper works.
 // Not using for now.
 var USER_AGENTS = [
@@ -215,18 +217,18 @@ TNMScraper.prototype.init = function(options) {
   self.updateStat({message: 'Iniciando scraper...'});
   
   // Check for ASPForm Handler
-  if(options.aspnet) {
+  if (options.aspnet) {
     self.aspnet = options.aspnet;
     Log.d(_TAG);
   }
 
-  if(options.state) {
+  if (options.state) {
     self.state = options.state;
   }
   
   // Check for delay configuration
-  if(options.delay) {
-    if(isNaN(options.delay)) {
+  if (options.delay) {
+    if (isNaN(options.delay)) {
       Log.w(_TAG, 'Delay value is not a number. Setting delay to default ' +
                  self.delay + 'milliseconds.');
     }
@@ -246,7 +248,7 @@ TNMScraper.prototype.init = function(options) {
     encoding: null
   };
   
-  if(options.cookies) {
+  if (options.cookies) {
     Log.d(_TAG, 'Cookies enabled.');
     requestDefaults.jar = options.cookies;
   }
@@ -255,7 +257,7 @@ TNMScraper.prototype.init = function(options) {
     requestDefaults.jar = true;
   }
 
-  if(options.followRedirects) {
+  if (options.followRedirects) {
     Log.d(_TAG, 'Follow all redirects enabled.');
     requestDefaults.followAllRedirects = options.followRedirects;
   }
@@ -264,15 +266,32 @@ TNMScraper.prototype.init = function(options) {
     requestDefaults.followAllRedirects = true;
   }
 
-  if(options.routine) {
+  if (options.scraper) {
+    self.scraper = options.scraper;
+    if (options.scraper.lastResults) {
+      LAST_RESULTS = options.scraper.lastResults;
+    }
+  }
+
+  if (options.routine) {
     self.routine = options.routine;
     stats.totalTasks = options.routine.length;
-    // Initialize regex strings to RegExp object
-    for(var task = 0; task < options.routine.length; ++task) {
-      var patterns = self.routine[task].patterns;
-      if(patterns) {
+    
+    for (var taskIndex = 0; taskIndex < options.routine.length; ++taskIndex) {
+      var task = self.routine[taskIndex];
+      
+      //
+      // Check for dynamic strings in request post body
+      //
+      self.handleFormDynamicStrings(task);
+      
+      //
+      // Initialize all regex strings to RegExp objects
+      //
+      var patterns = task.patterns;
+      if (patterns) {
         var keys = Object.keys(patterns);
-        for(var keyIndex = 0; keyIndex < keys.length; ++keyIndex) {
+        for (var keyIndex = 0; keyIndex < keys.length; ++keyIndex) {
           var key = keys[keyIndex];
           patterns[key] = new RegExp(patterns[key]);
         }
@@ -284,14 +303,7 @@ TNMScraper.prototype.init = function(options) {
     Log.e(_TAG, err.message);
     return;
   }
-
-  if(options.scraper) {
-    self.scraper = options.scraper;
-    if(options.scraper.lastResults) {
-      LAST_RESULTS = options.scraper.lastResults;
-    }
-  }
-
+  
   self.request = self.request.defaults(requestDefaults);
 
   delete options.routine;
@@ -558,11 +570,11 @@ TNMScraper.prototype.scrapeDetails = function(nextTask) {
     }
     
     detailsQueue.push(contents, function(err, resultNotice) {
-      if(err) {
+      if (err) {
         return nextTask(err, null);
       }
 
-      if(!self.results[TASK.GET_DETAILS]) {
+      if (!self.results[TASK.GET_DETAILS]) {
         self.results[TASK.GET_DETAILS] = [];
       }
 
@@ -875,7 +887,7 @@ function buildSelectorString(selector) {
  function isJavascriptFunction(string) {
    if(!string) return false;
    var test = string.toLowerCase();
-   return startsWith(test, 'javascript');
+   return stringutils.startsWith(test, 'javascript');
  }
  
  function extractJavascriptFunctionNameFrom(string) {
@@ -1084,8 +1096,150 @@ function createTag(name) {
   return result;
 }
 
-function startsWith(strA, strB) {
-  return strA.indexOf(strB) === 0;
+
+// Move this to separate file
+
+var SECOND_IN_MILLIS  = 1000;
+var MINUTE_IN_MILLIS  = SECOND_IN_MILLIS  *  60;
+var HOUR_IN_MILLIS    = MINUTE_IN_MILLIS  *  60;
+var DAY_IN_MILLIS     = HOUR_IN_MILLIS    *  24;
+var WEEK_IN_MILLIS    = DAY_IN_MILLIS     *   7;
+var YEAR_IN_MILLIS    = DAY_IN_MILLIS     * 365;
+
+TNMScraper.prototype.handleFormDynamicStrings = function(task) {
+
+  var self = this;
+  
+  if (!task) return;
+  if (!task.request) return;
+  if (task.request.method !== 'POST' || !task.request.form) return;
+
+  var formParams = Object.keys(task.request.form);
+  for (var paramIndex = 0; paramIndex < formParams.length; ++paramIndex) {
+
+    //
+    // Any string that begins with $ is a dynamic string, check for this
+    // NOTE(diego): Change this if we have any website that uses $ as first character
+    // in a request body
+    //
+    
+    var param = formParams[paramIndex];
+    var value = task.request.form[param];
+    
+    if (typeof value === 'string' && stringutils.startsWith(value, '$')) {
+      
+      //
+      // If we have 'lastRunDate' use last scraper run date
+      //
+      if (stringutils.contains(value, 'lastRunDate')) {
+        if (self.scraper && self.scraper.lastRunDate) {
+          value = dateAsString(new Date(self.scraper.lastRunDate));
+          task.request.form[param] = value;
+          continue;
+        }
+        else {
+          // Fallback to 'today' case
+          value = '$today';
+        }
+      }
+      
+      //
+      // If we have 'today' use todays date 
+      //
+      if (stringutils.contains(value, 'today')) {        
+        value = dateAsString(new Date());
+        task.request.form[param] = value;
+        continue;
+      }
+
+      //
+      // TODO(diego): Support start and end dates and use the
+      // start date in all next dates
+      //
+      
+      //
+      // If we have 'nextYear' create a date that ends one year from today,
+      //
+      if (stringutils.contains(value, 'nextYear')) {
+        value = dateAsString(new Date(Date.now() + YEAR_IN_MILLIS));
+        task.request.form[param] = value;
+        continue;
+      }
+
+      //
+      // TODO(diego): Add more here if necessary
+      //
+    }
+  }
+}
+
+function dateAsString(date, format = 'dd/mm/yyyy') {
+
+  var result = null;
+  
+  var delimiter = '',
+      dCount    = 0,
+      mCount    = 0,
+      yCount    = 0;
+  
+  for (var i = 0; i < format.length; ++i) {
+    var c = format.charAt(i);
+    
+    if (c === 'd') {
+      dCount++;
+    }
+    else if (c === 'm') {
+      mCount++;
+    }
+    else if (c === 'y') {
+      yCount++;
+    }
+    //
+    // If c is a . or - or /
+    //
+    else if (c === '.' || c === '-' || c === '/') {
+      delimiter = c;
+    }
+  }
+
+  if (!delimiter) {
+    throw new Error('Delimiter invalid.');
+  }
+  
+  if (date) {
+    var day   = date.getDate(),
+        month = date.getMonth() + 1,
+        year  = date.getFullYear();
+
+    if (dCount === 2) {
+      day = addZero(day);
+    }
+
+    if (mCount === 2) {
+      month = addZero(month);
+    }
+        
+    if (yCount === 2) {
+      // Convert to string and get last two digits
+      year = String(year).substring(2);
+    }
+
+    // Convert number to strings
+    day = String(day);
+    month = String(month);
+    
+    result = (day + delimiter + month + delimiter + year);
+  }
+  
+  return result;
+}
+
+function addZero(i) {
+  if (i < 10) {
+    i = '0' + i;
+  }
+
+  return i;
 }
 
 module.exports = TNMScraper;
