@@ -222,6 +222,10 @@ function readFile(path, options) {
   return result;
 }
 
+function writeFile(path, data, options) {
+  fs.writeFileSync(path, data, options)
+}
+
 function renameFile(oldPath, newPath) {
 	fs.renameSync(oldPath, newPath);
 }
@@ -271,6 +275,7 @@ exports.removeFile = removeFile;
 exports.getNameFromPath = getNameFromPath;
 exports.removeDirectory = removeDirectory;
 exports.readFile = readFile;
+exports.writeFile = writeFile;
 exports.renameFile = renameFile;
 exports.convertEncoding = convertEncoding;
 exports.exists = exists;

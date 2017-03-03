@@ -366,6 +366,22 @@ ScraperAPI.prototype.insertScraper = function(req, res) {
           err.code));
       }
 
+      if (scraper.config) {
+        // Save config to disk
+        var configPath = path.resolve('./scrapers');
+        var scraperConfigPath = path.join(configPath, saved._id + '.json');
+
+        // Save as json config file
+        try {
+          var string = JSON.stringify(scraper.config);
+          if (string) {
+            fileutils.writeFile(scraperConfigPath, string);
+          }
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
       return res.send(makeResponse(true, saved));
     });
   } else {

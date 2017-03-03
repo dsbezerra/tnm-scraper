@@ -35,7 +35,7 @@ module.exports = {
     //
     if (stringutils.isUriValid(first)) {
 
-      console.log('We have links actual links, so begin resolving process.');
+      console.log('We have actual links, so begin resolving process.');
       
       var count = 0;
       while (count < links.length) {
