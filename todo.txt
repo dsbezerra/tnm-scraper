@@ -5,6 +5,10 @@
     / Partially done.
     * Done.
 
+ 
+- PUT SCRAPERS IN OPENSHIFT_DATA_DIR OR IN DATABASE BEFORE USE THIS IN PRODUCTION...
+  http://stackoverflow.com/a/27407422
+
 - Add ignoring options
   - Ignore by properties (date, number, etc...)
 

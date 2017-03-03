@@ -663,14 +663,8 @@ TNMScraper.prototype.resolveLinks = function(contents, page, uri, callback) {
   }
   else {
     var task = self.routine[stats.currentTask];
-    if(task.request && task.request.baseURI) {
-      while(contentIndex < contents.length) {
-        var baseURI = task.request.baseURI;
-        contents[contentIndex].link = baseURI + contents[contentIndex++].link;
-      }
-    }
-    else {
-      // TODO(diego): See what we can do here...
+    while (contentIndex < contents.length) {
+      contents[contentIndex].link = resolveRelativeURI(page.uri, contents[contentIndex++].link);
     }
 
     callback(null, contents);
