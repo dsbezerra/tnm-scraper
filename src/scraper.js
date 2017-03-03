@@ -1173,9 +1173,14 @@ TNMScraper.prototype.handleFormDynamicStrings = function(task) {
   }
 }
 
-function dateAsString(date, format = 'dd/mm/yyyy') {
+function dateAsString(date, format) {
 
   var result = null;
+
+  // Default
+  if (!format) {
+    format = 'dd/mm/yyyy';
+  }
   
   var delimiter = '',
       dCount    = 0,
