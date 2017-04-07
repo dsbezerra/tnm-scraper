@@ -12,9 +12,9 @@
 - Add ignoring options
   - Ignore by properties (date, number, etc...)
 
-- Add support for initial date when requesting
-- Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
-  - Date wildcard
+* Add support for initial date when requesting
+* Support for some dynamic strings in JSON (ex: date: $today will be transformed to the current day of Scraper execution)
+  * Date wildcard
 
 * Minimal functionally to work.
 * Extraction of compressed archives

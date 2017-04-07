@@ -14,6 +14,15 @@ const secrets = {
     port: 21,
     user: "fileuploader@tnmlicitacoes.com",
     password: "c0b0l$xablau1",
+  },
+  
+  reportEmail: {
+    host: "br610.hostgator.com.br",
+    port: 465,
+    auth: {
+      user: "scraper@tnmlicitacoes.com",
+      pass: "rGrhLfQSNjt7Jm7NHq5W6gXN"
+    }
   }
 }
 

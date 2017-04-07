@@ -11,7 +11,11 @@ var Result = require('./src/models/result');
 
 var fileutils = require("./src/utils/fileutils");
 
+var reportTo = require('./src/error_reporter');
 var scrape = require('./index');
+
+// THIS IS NOT FINISHED... BUT WORKS...
+// TODO(diego): Rewrite in Go and make it better, faster :D
 
 function ScraperAPI() {
   var self = this;
@@ -23,6 +27,7 @@ function ScraperAPI() {
   self.connectToDatabase();
 }
 
+// Initialize scraper api
 ScraperAPI.prototype.init = function() {
   var self = this;
   var db = secrets.db;
@@ -39,7 +44,7 @@ ScraperAPI.prototype.init = function() {
   self.progress = {};
 }
 
-
+// Connects to tnm-scraper database
 ScraperAPI.prototype.connectToDatabase = function(callback) {
   var self = this;
   mongoose.connect(self.dbUri, function(err) {
@@ -84,26 +89,26 @@ ScraperAPI.prototype.runScraper = function(req, res) {
         
         var configPath = path.join('scrapers', scraper._id + '.json');
         var _scraper = scrape(configPath, options, function(err, results) {
-
-          updateRunning(scraper, false, function(err, raw) {
-            if (err) {
-              console.log(err);
-            }
-          });
-
+          // Set scraper as not running
+          updateRunning(scraper, false);
           if (err) {
             // TODO(diego): Emit error event
             console.log(err);
+            reportTo({
+              subject: '[ERROR] SCRAPER #' + scraper._id, 
+              text: err.message,
+            });
           }
-
-          // Save in database
-          if (results.length > 0) {
-            for (var i = 0; i < results.length; ++i) {
-              results[i].scraper = scraper._id;
-              var r = new Result(results[i]);
-              r.save();
-            }
-          } 
+          else {
+            // If we ran successfully then save results in database
+            if (results && results.length > 0) {
+              for (var i = 0; i < results.length; ++i) {
+                results[i].scraper = scraper._id;
+                var r = new Result(results[i]);
+                r.save();
+              }
+            } 
+          }
         });
 
         // 
@@ -116,9 +121,14 @@ ScraperAPI.prototype.runScraper = function(req, res) {
         // Will be useful in future
         //
         _scraper.on('start', function(message) {
+          // Update scraper as running  in database
           updateRunning(scraper, true, function(err, raw) {
             if (err) {
               console.log(err);
+              reportTo({
+                subject: '[ERROR] SCRAPER #' + scraper._id, 
+                text: err.message,
+              });
             }
             return res.send({
               success: true,
@@ -138,11 +148,7 @@ ScraperAPI.prototype.runScraper = function(req, res) {
             }, 5000);
 
           // Update in the database as not running
-          updateRunning(scraper, false, function(err, raw) {
-            if (err) {
-              console.log(err);
-            }
-          });
+          updateRunning(scraper, false);
         });
         
         //
@@ -294,7 +300,7 @@ ScraperAPI.prototype.getScraperConfiguration = function(req, res) {
       else {
         console.log('Couldn\'t read file!');
         return res.status(500)
-                  .send(makeError('Couldn\t read file!'));
+                  .send(makeError('Couldn\'t read file!'));
       }
     }
     else {
@@ -468,12 +474,18 @@ ScraperAPI.prototype.updateResultById = function(req, res) {
  * Updates running property
  */
 function updateRunning(scraper, running, callback) {
+
+  var obj = {
+    running: running
+  }
+
+  if (running) {
+    obj.lastRunDate = new Date();
+  }
+  
   Scraper.update({
     _id: scraper._id
-  }, objectAssign(scraper, {
-    running: running,
-    lastRunDate: new Date()
-  }), function(err, raw) {
+  }, objectAssign(scraper, obj, function(err, raw) {
     if (err) {
       return callback(err);
     }
