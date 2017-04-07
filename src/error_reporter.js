@@ -27,6 +27,14 @@ transporter.verify(function(error, success) {
 function report(data, callback) {
 
   var to = data.to || reportEmail.auth.user;
+
+  if (!transporter) {
+    return callback(new Error('Transporter is null!'));
+  }
+
+  if (!data) {
+    return callback(new Error('Data is null!'));
+  }
   
   if (transporter && data) {
     var message = {
@@ -43,9 +51,6 @@ function report(data, callback) {
 
       callback(null, 'Error reported successfully.');
     });
-  }
-  else {
-    return callback(new Error('Transporter is null!'));
   }
 }
 

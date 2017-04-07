@@ -96,7 +96,7 @@ ScraperAPI.prototype.runScraper = function(req, res) {
             console.log(err);
             reportTo({
               subject: '[ERROR] SCRAPER #' + scraper._id, 
-              text: err.message,
+              text: err.message
             });
           }
           else {
@@ -127,7 +127,7 @@ ScraperAPI.prototype.runScraper = function(req, res) {
               console.log(err);
               reportTo({
                 subject: '[ERROR] SCRAPER #' + scraper._id, 
-                text: err.message,
+                text: err.message
               });
             }
             return res.send({
@@ -485,7 +485,7 @@ function updateRunning(scraper, running, callback) {
   
   Scraper.update({
     _id: scraper._id
-  }, objectAssign(scraper, obj, function(err, raw) {
+  }, objectAssign(scraper, obj), function(err, raw) {
     if (err) {
       return callback(err);
     }
