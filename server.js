@@ -5,6 +5,8 @@ const bodyParser   = require('body-parser');
 const compression  = require('compression');
 const logger       = require('morgan');
 
+const reportTo  = require('./src/error_reporter');
+
 const FilesController = require('./src/controllers/files');
 const ScraperAPI = require('./api');
 
@@ -12,6 +14,21 @@ const app = express();
 
 var ip = process.env.OPENSHIFT_NODEJS_IP || process.env.IP || '0.0.0.0';
 var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080;
+
+// Log any uncaughtException before exitting app
+process.on('uncaughtException', function (err) {
+    console.error(err.stack);
+
+    // Send errors to an e-mail
+    reportTo({
+        subject: '[ERROR] uncaughtException',
+        text: err.stack,
+    });
+
+    // Exit app
+    process.exit(1);
+});
+
 
 // Middlewares
 app.use(compression());
@@ -21,12 +38,13 @@ app.use(logger('dev'));
 
 var scraperApi = new ScraperAPI();
 
+// Index route
 app.get('/', function(req, res) {
   res.send('Cobol!');
 });
 
 
-// TODO(diego): Remove these file endpoints.
+// TODO(diego): Remove these files endpoints.
 //
 // *DOC*
 // method - POST
@@ -72,7 +90,7 @@ app.get('/scrapers/:id', scraperApi.getScraperById);
 //
 // *DOC*
 // method - GET
-// desc - Get scraper c onfiguration
+// desc - Get scraper configuration
 // endpoint - /scrapers/:id/configuration
 //
 app.get('/scrapers/:id/configuration', scraperApi.getScraperConfiguration);
