@@ -1,5 +1,6 @@
 
 var url = require('url');
+var stringutils = require('../utils/stringutils');
 
 /**
  * Extracts download information to a object
@@ -107,6 +108,16 @@ function extractJavascriptFunctionNameFrom(string) {
   }
   
   return name;
+}
+
+/**
+ * Check if is a javascript function
+ * @param {string} tring String to be checked
+ */
+function isJavascriptFunction(string) {
+  if(!string) return false;
+  var test = string.toLowerCase();
+  return stringutils.startsWith(test, 'javascript');
 }
 
 function endsWith(strA, strB) {
