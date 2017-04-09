@@ -23,10 +23,11 @@ process.on('uncaughtException', function (err) {
     reportTo({
         subject: '[ERROR] uncaughtException',
         text: err.stack,
-    });
+    }, function(err) {
 
-    // Exit app
-    process.exit(1);
+        // Exit app after operation 
+        process.exit(1);
+    });
 });
 
 
