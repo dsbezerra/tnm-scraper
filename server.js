@@ -17,17 +17,17 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080;
 
 // Log any uncaughtException before exitting app
 process.on('uncaughtException', function (err) {
-    console.error(err.stack);
+  console.error(err.stack);
 
-    // Send errors to an e-mail
-    reportTo({
-        subject: '[ERROR] uncaughtException',
-        text: err.stack,
-    }, function(err) {
-
-        // Exit app after operation 
-        process.exit(1);
-    });
+  // Send errors to an e-mail
+  reportTo({
+      subject: '[ERROR] uncaughtException',
+      text: err.stack,
+  }, function(err) {
+      
+      // Exit app after operation 
+      process.exit(1);
+  });
 });
 
 

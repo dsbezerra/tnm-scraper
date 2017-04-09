@@ -482,15 +482,18 @@ function updateRunning(scraper, running, callback) {
   if (running) {
     obj.lastRunDate = new Date();
   }
-  
+
   Scraper.update({
-    _id: scraper._id
-  }, objectAssign(scraper, obj), function(err, raw) {
+    _id: scraper._id,
+  }, objectAssign(scraper, obj), function (err, raw) {
     if (err) {
-      return callback(err);
+      if (typeof callback === 'function') 
+        return callback(err);
     }
 
-    return callback(null, raw);
+    if (typeof callback === 'function') {
+      return callback(null, raw);
+    }
   });
 }
 
