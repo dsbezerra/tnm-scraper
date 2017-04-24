@@ -302,6 +302,7 @@ function testTask(testURL, taskType, config, finishCallback) {
   return new TaskTest(options);
 }
 
+// Usage example
 var taskTest = testTask(
   'http://e-negocioscidadesp.prefeitura.sp.gov.br/BuscaLicitacao.aspx',
   'GET_LINKS',

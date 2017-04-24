@@ -113,11 +113,28 @@ module.exports = {
     return false;   
   },
 
+  //
+  // Check if a given string starts with b
+  //
   startsWith: function(a, b) {
     return a.indexOf(b) === 0;
   },
 
+  //
+  // Check if a given string contains b
+  //
   contains: function(a, b) {
     return a.indexOf(b) > -1;
+  },
+
+  //
+  // Replace strings on a given string
+  //
+  replace: function(source, pattern, replacer) {
+    var result = source;
+
+    result = result.replace(pattern, replacer);
+
+    return result;
   }
 }

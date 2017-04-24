@@ -7,6 +7,7 @@ const logger       = require('morgan');
 
 const reportTo  = require('./src/error_reporter');
 
+const ScheduleController = require('./controllers/schedule');
 const FilesController = require('./src/controllers/files');
 const ScraperAPI = require('./api');
 
@@ -19,15 +20,17 @@ var port = process.env.OPENSHIFT_NODEJS_PORT || process.env.PORT || 8080;
 process.on('uncaughtException', function (err) {
   console.error(err.stack);
 
-  // Send errors to an e-mail
-  reportTo({
-      subject: '[ERROR] uncaughtException',
-      text: err.stack,
-  }, function(err) {
-      
+  // Send errors to an e-mail if we are in production
+  if (process.env.NODE_ENV === 'production') {
+      reportTo({
+        subject: '[ERROR] uncaughtException',
+        text: err.stack,
+      }, function(err) {
+          
       // Exit app after operation 
       process.exit(1);
-  });
+    });
+  }
 });
 
 
@@ -53,7 +56,6 @@ app.get('/', function(req, res) {
 // endpoint - /files/process
 app.post('/files/process', FilesController.process);
 app.post('/files/checkProgress', FilesController.checkProgress);
-
 
 //[Scraper]
 //
@@ -138,6 +140,34 @@ app.delete('/scrapers/:id', scraperApi.deleteScraper);
 
 // Updates a result
 app.put('/results/:id', scraperApi.updateResultById);
+
+
+// [Schedule] endpoints
+
+//
+// Return a schedule from database
+//
+app.get('/schedule/:id', ScheduleController.get);
+
+//
+// Returns all schedules from database
+//
+app.get('/schedules', ScheduleController.getAll);
+
+//
+// Register a schedule to a scraper
+//
+app.post('/scrapers/:id/schedule', ScheduleController.insert);
+
+//
+// Removes a schedule
+//
+app.delete('/schedule/:id', ScheduleController.delete);
+
+//
+// Updates a schedule
+//
+app.put('/schedule/:id', ScheduleController.update);
 
 app.listen(port, ip, function() {
   console.log('Server started listening...');

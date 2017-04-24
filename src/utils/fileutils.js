@@ -227,7 +227,7 @@ function writeFile(path, data, options) {
 }
 
 function renameFile(oldPath, newPath) {
-	fs.renameSync(oldPath, newPath);
+  fs.renameSync(oldPath, newPath);
 }
 
 function convertEncoding(buffer, to, from) {

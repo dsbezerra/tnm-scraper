@@ -14,11 +14,14 @@ var fileutils = require("./src/utils/fileutils");
 var reportTo = require('./src/error_reporter');
 var scrape = require('./index');
 
+var SCRAPERS_DIR = process.env.OPENSHIFT_DATA_DIR + '/scrapers' || './scrapers';
+
 // THIS IS NOT FINISHED... BUT WORKS...
 // TODO(diego): Rewrite in Go and make it better, faster :D
 
 function ScraperAPI() {
   var self = this;
+  
   self.progress = null;
   
   self.dbUri = null;
@@ -87,7 +90,7 @@ ScraperAPI.prototype.runScraper = function(req, res) {
           });
         }
         
-        var configPath = path.join('scrapers', scraper._id + '.json');
+        var configPath = path.join(SCRAPERS_DIR, scraper._id + '.json');
         var _scraper = scrape(configPath, options, function(err, results) {
           // Set scraper as not running
           updateRunning(scraper, false);
@@ -142,11 +145,11 @@ ScraperAPI.prototype.runScraper = function(req, res) {
         //
         _scraper.on('finish', function(data) {
           console.log('Removing progress data in 5s');
-            setTimeout(function() {
-              delete self.progress[taskId];
-              console.log('Removed ' + taskId + ' progress data!');
-            }, 5000);
-
+          setTimeout(function() {
+            delete self.progress[taskId];
+            console.log('Removed ' + taskId + ' progress data!');
+          }, 5000);
+          
           // Update in the database as not running
           updateRunning(scraper, false);
         });
@@ -155,8 +158,19 @@ ScraperAPI.prototype.runScraper = function(req, res) {
         // onStats Event: We keep track of current task progress
         // by using its ID to update with current statistics from Scraper!
         //
-        _scraper.on('stats', function(stats) {
-          self.progress[taskId] = stats;
+        _scraper.on('stats', function(stats) {          
+          var oldProgress = self.progress[taskId];
+
+          if (!oldProgress) {
+            self.progress[taskId] = stats;
+            self.progress[taskId].new = true;
+            return;
+          }
+          
+          if (checkForNewData(oldProgress, stats)) {
+            self.progress[taskId] = stats;
+            self.progress[taskId].new = true;
+          }
         });
       }
     });
@@ -294,7 +308,8 @@ ScraperAPI.prototype.getScraperConfiguration = function(req, res) {
           var config = JSON.parse(configFile);
           return res.send(makeResponse(true, { id: id, config: config }));
         } catch (err) {
-          return res.status(500).send(makeError('Config file JSON is incorrect!'));
+          return res.status(500)
+                    .send(makeError('Config file JSON is incorrect!'));
         }
       }
       else {
@@ -335,8 +350,8 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
       });
   } 
   else {
-    return res.status(500).
-    send(makeError('id param is not valid'));
+    return res.status(500)
+              .send(makeError('id param is not valid'));
   }
 }
 
@@ -344,10 +359,29 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
  * GET /scrapers/checkProgres/:id
  */
 ScraperAPI.prototype.checkProgress = function(req, res) {
+
+  //
+  // Uses long polling to avoid too much requests
+  //
   var self = this;
   var id = req.params.id;
   if (id) {
-    return res.send(makeResponse(true, self.progress[id]));
+
+    //
+    // Get old progress
+    //
+    var progress = self.progress[id];
+    if (progress.new) {
+      return res.send(makeResponse(true, progress));
+    }
+    else {
+      // If not check again until we have new data or connection timeouts.
+      setTimeout(function() {
+        //console.log('checking progress again...');
+        self.checkProgress(req, res);
+      }, 500);
+    }
+    
   } else {
     return res.status(500)
       .send(makeError('id param is not valid!'));
@@ -367,14 +401,13 @@ ScraperAPI.prototype.insertScraper = function(req, res) {
     });
     s.save(function(err, saved) {
       if (err) {
-        return res.status(500).
-        send(makeError(err.message,
-          err.code));
+        return res.status(500)
+                  .send(makeError(err.message, err.code));
       }
 
       if (scraper.config) {
         // Save config to disk
-        var configPath = path.resolve('./scrapers');
+        var configPath = path.resolve(SCRAPERS_DIR);
         var scraperConfigPath = path.join(configPath, saved._id + '.json');
 
         // Save as json config file
@@ -409,8 +442,7 @@ ScraperAPI.prototype.updateScraper = function(req, res) {
     }, scraper, function(err, raw) {
       if (err) {
         return res.status(500)
-          .send(makeError(err.message,
-            err.code));
+                  .send(makeError(err.message, err.code));
       }
 
       return res.send(makeResponse(true, raw));
@@ -470,64 +502,6 @@ ScraperAPI.prototype.updateResultById = function(req, res) {
   }
 }
 
-/**
- * Updates running property
- */
-function updateRunning(scraper, running, callback) {
-
-  var obj = {
-    running: running
-  }
-
-  if (running) {
-    obj.lastRunDate = new Date();
-  }
-
-  Scraper.update({
-    _id: scraper._id,
-  }, objectAssign(scraper, obj), function (err, raw) {
-    if (err) {
-      if (typeof callback === 'function') 
-        return callback(err);
-    }
-
-    if (typeof callback === 'function') {
-      return callback(null, raw);
-    }
-  });
-}
-
-/**
- * Makes a error response
- */
-function makeError(message, code) {
-  return {
-    success: false,
-    err: {
-      message: message,
-      code: code,
-    }
-  };
-}
-
-/**
- * Makes a reponse object
- */
-function makeResponse(success, data) {
-  var response = {
-    success: success,
-    result: {}
-  };
-
-  if (typeof data === 'object' && data[0]) {
-    response.result['count'] = data.length;
-  }
-
-  response.result['data'] = data;
-  return response;
-}
-
-
 // Util functions
 function findScraperIncludingLastResults(id, callback) {
   Scraper.find({
@@ -562,6 +536,85 @@ function findScraperIncludingLastResults(id, callback) {
       });
     }
   });
+}
+
+/**
+ * Makes a error response
+ */
+function makeError(message, code) {
+  return {
+    success: false,
+    err: {
+      message: message,
+      code: code,
+    }
+  };
+}
+
+/**
+ * Makes a reponse object
+ */
+function makeResponse(success, data) {
+  var response = {
+    success: success,
+    result: {}
+  };
+
+  if (typeof data === 'object' && data[0]) {
+    response.result['count'] = data.length;
+  }
+
+  response.result['data'] = data;
+  return response;
+}
+
+/**
+ * Updates running property
+ */
+function updateRunning(scraper, running, callback) {
+
+  var obj = {
+    running: running
+  }
+
+  if (running) {
+    obj.lastRunDate = new Date();
+  }
+
+  Scraper.update({
+    _id: scraper._id,
+  }, objectAssign(scraper, obj), function (err, raw) {
+    if (err) {
+      if (typeof callback === 'function') 
+        return callback(err);
+    }
+
+    if (typeof callback === 'function') {
+      return callback(null, raw);
+    }
+  });
+}
+
+//
+// Check for new data in progress
+//
+function checkForNewData(oldProgress, newProgress) {
+  var result = false;
+
+  if (!oldProgress || !newProgress) {
+    result = true;
+    return result;
+  }
+
+  result = oldProgress.isRunning      !== newProgress.isRunning      ||
+           oldProgress.totalBiddings  !== newProgress.totalBiddings  ||
+           oldProgress.totalExtracted !== newProgress.totalExtracted ||
+           oldProgress.currentBidding !== newProgress.currentBidding ||
+           oldProgress.newBiddings    !== newProgress.newBiddings    ||
+           oldProgress.currentTask    !== newProgress.currentTask    ||
+           oldProgress.message        !== newProgress.message;
+
+  return result;
 }
 
 module.exports = ScraperAPI;

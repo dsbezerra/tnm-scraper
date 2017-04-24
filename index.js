@@ -6,6 +6,9 @@ var objectAssign = require('object-assign');
 
 var defaultEnconding = 'utf-8';
 
+/**
+ * Starts a new scraper app instance
+ */
 function scrape(config, options, callback) {
   if (typeof config === 'undefined') {
     throw new Error('undefined is not a valid config path.')
@@ -16,20 +19,20 @@ function scrape(config, options, callback) {
     options = {};
   }
   
-  var _config = parseConfig(config);
-  if (!_config) {
+  var parsedConfig = parseConfig(config);
+  if (!parseConfig) {
     console.log("Failed to parse configuration. Check if the scraper configuration is valid!");
     return null;
   }
   
   // Append options and callback to config
-  _config = objectAssign(_config, options);
+  parsedConfig = objectAssign(parsedConfig, options);
   if (config.scraper) {
-    _config.scraper = config.scraper;
+    parsedConfig.scraper = config.scraper;
   }
-  _config.callback = callback;
+  parsedConfig.callback = callback;
 
-  return new scraper(_config);
+  return new scraper(parsedConfig);
 }
 
 /**
