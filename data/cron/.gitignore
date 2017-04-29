@@ -2,5 +2,4 @@
 *
 # Except these file
 !.gitignore
-!extracted_tmp
-!cron
+!minutely

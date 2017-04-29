@@ -57,6 +57,27 @@ app.get('/', function(req, res) {
 app.post('/files/process', FilesController.process);
 app.post('/files/checkProgress', FilesController.checkProgress);
 
+//[Schedule]
+//
+// Return a schedule from database
+//
+app.get('/schedules/:id', ScheduleController.get);
+
+//
+// Returns all schedules from database
+//
+app.get('/schedules', ScheduleController.getAll);
+
+//
+// Removes a schedule
+//
+app.delete('/schedules/:id', ScheduleController.delete);
+
+//
+// Updates a schedule
+//
+app.put('/schedules/:id', ScheduleController.update);
+
 //[Scraper]
 //
 // *DOC*
@@ -66,7 +87,6 @@ app.post('/files/checkProgress', FilesController.checkProgress);
 //
 app.get('/scrapers', scraperApi.getScrapers);
 
-//[Scraper]
 //
 // *DOC*
 // method - GET
@@ -141,33 +161,10 @@ app.delete('/scrapers/:id', scraperApi.deleteScraper);
 // Updates a result
 app.put('/results/:id', scraperApi.updateResultById);
 
-
-// [Schedule] endpoints
-
-//
-// Return a schedule from database
-//
-app.get('/schedule/:id', ScheduleController.get);
-
-//
-// Returns all schedules from database
-//
-app.get('/schedules', ScheduleController.getAll);
-
 //
 // Register a schedule to a scraper
 //
 app.post('/scrapers/:id/schedule', ScheduleController.insert);
-
-//
-// Removes a schedule
-//
-app.delete('/schedule/:id', ScheduleController.delete);
-
-//
-// Updates a schedule
-//
-app.put('/schedule/:id', ScheduleController.update);
 
 app.listen(port, ip, function() {
   console.log('Server started listening...');

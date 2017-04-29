@@ -9,9 +9,9 @@ var cronutils = require('../src/utils/cronutils');
 var fileutils = require('../src/utils/fileutils');
 var stringutils = require('../src/utils/stringutils');
 
-var CRON_DIR = process.env.OPENSHIFT_CRON_DIR || './data/cron';
-var WEEKLY_MODEL_PATH = CRON_DIR + '/weekly_model';
-var DAILY_MODEL_PATH = CRON_DIR + '/daily_model';
+var CRON_DIR = process.env.OPENSHIFT_DATA_DIR || './data/cron';
+var WEEKLY_MODEL_PATH = './data/cron/weekly_model';
+var DAILY_MODEL_PATH = './data/cron/daily_model';
 
 module.exports = {
 
@@ -99,6 +99,13 @@ module.exports = {
         // 
         var metadata = createFile(id, body.cron,
                                   body.frequency);
+
+        if (!metadata) {
+          return res.send({
+            success: false,
+            message: 'Couldn\'t create cron file',
+          });
+        }
 
         //
         // Create schedule
@@ -189,14 +196,13 @@ module.exports = {
               var schedule = schedules[0];
               
               //
-              // If we removed successfully and have a schedule name and frequency
+              // If we removed successfully and have a schedule name
               // remove script from cron dir
               //
-              if (schedule.fileName && schedule.frequency) {
-                var filePath = `${CRON_DIR}/${schedule.frequency}/${schedule.fileName}.sh`;
-
+              if (schedule && schedule.fileName) {
+                var filePath = CRON_DIR + '/minutely/' + schedule.fileName;
                 try {
-                  fileutils.removeFile(filePath);
+                  fileutils.removeFile(path.resolve(filePath));
                 } catch (err) {
                   console.log(err.message);
                 }
@@ -257,7 +263,7 @@ module.exports = {
 function createFile(scraperId, cron, frequency) {
 
   var modelPath = frequency === 'weekly' ? WEEKLY_MODEL_PATH : DAILY_MODEL_PATH;
-  var modelFile = fileutils.readFile(modelPath, { encoding: 'utf8' });
+  var modelFile = fileutils.readFile(path.resolve(modelPath), { encoding: 'utf8' });
   if (modelFile) {
 
     //
@@ -272,7 +278,7 @@ function createFile(scraperId, cron, frequency) {
     //
     // Replace scraper_id
     //
-    newFile = stringutils.replace(newFile, /%scraper_id%/, `"${scraperId}"`);
+    newFile = stringutils.replace(newFile, /%scraper_id%/, '"' + scraperId + '"');
 
     //
     // Replace week_day
@@ -284,7 +290,7 @@ function createFile(scraperId, cron, frequency) {
     //
     // Replace time
     //
-    newFile = stringutils.replace(newFile, /%time%/, `"${hours}:${minutes}"`);
+    newFile = stringutils.replace(newFile, /%time%/, '"' + hours + ':' + minutes + '"');
 
     //
     // Save to disk
@@ -293,8 +299,11 @@ function createFile(scraperId, cron, frequency) {
     //
     // Save all to minutely folder
     //
-    var freqFolder = `${CRON_DIR}/minutely/${fileName}`;
-    var filePath = path.resolve(freqFolder);
+    var writePath = CRON_DIR + '/minutely/' + fileName;
+    var filePath = path.resolve(writePath);
+
+    console.log('Creating file at: %s', filePath);
+    
     fileutils.writeFile(filePath, newFile);
 
     return {
