@@ -7,8 +7,6 @@ var objectAssign = require('object-assign');
 var scrape  = require('./index');
 var secrets = require('./config/secrets');
 
-mongoose.Promise = global.Promise;
-
 const Scraper = require('./src/models/scraper');
 const Result  = require('./src/models/result');
 
@@ -65,7 +63,8 @@ function run(scraper) {
   //
   // Find scraper configuration path
   //
-  var scraperPath = path.join('scrapers', scraper._id + '.json');
+  var scrapersPath = process.env.OPENSHIFT_REPO_DIR + '/scrapers' || 'scrapers';
+  var scraperPath = path.join(scrapersPath, scraper._id + '.json');
 
   //
   // Sets the options

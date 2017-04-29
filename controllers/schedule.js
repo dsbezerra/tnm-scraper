@@ -128,7 +128,7 @@ module.exports = {
             //
             // If we got an error when saving, remove created script.
             //
-            fileutils.removeFile(data.path);
+            fileutils.removeFile(metadata.path);
           } else {
             return res.send({
               success: true,
@@ -200,11 +200,19 @@ module.exports = {
               // remove script from cron dir
               //
               if (schedule && schedule.fileName) {
-                var filePath = CRON_DIR + '/minutely/' + schedule.fileName;
+                var filePath = path.resolve(CRON_DIR + '/minutely/' + schedule.fileName);
                 try {
-                  fileutils.removeFile(path.resolve(filePath));
+                  fileutils.removeFile(filePath);
                 } catch (err) {
                   console.log(err.message);
+                }
+
+                //
+                // If we are in openshift server, remove file from repo dir at runtime
+                //
+                if (process.env.OPENSHIFT_REPO_DIR) {
+                  var exec = require('child_process').exec;
+                  exec('rm ' + process.env.OPENSHIFT_REPO_DIR + '/.openshift/cron/minutely/' + schedule.fileName);
                 }
               }
 
@@ -290,7 +298,8 @@ function createFile(scraperId, cron, frequency) {
     //
     // Replace time
     //
-    newFile = stringutils.replace(newFile, /%time%/, '"' + hours + ':' + minutes + '"');
+    var totalMinutes = (hours * 60) + minutes;
+    newFile = stringutils.replace(newFile, /%time%/, totalMinutes);
 
     //
     // Save to disk
@@ -305,6 +314,14 @@ function createFile(scraperId, cron, frequency) {
     console.log('Creating file at: %s', filePath);
     
     fileutils.writeFile(filePath, newFile);
+
+    //
+    // If we are in openshift server, copy file to repo dir at runtime
+    //
+    if (process.env.OPENSHIFT_REPO_DIR) {
+      var exec = require('child_process').exec;
+      exec('cp ' + filePath + ' $OPENSHIFT_REPO_DIR/.openshift/cron/minutely');
+    }
 
     return {
       name: fileName,
