@@ -1,7 +1,7 @@
 var nodemailer = require('nodemailer');
 var reportEmail = require('../config/secrets').reportEmail;
 
-var TAG = '[error_reporter.js]';
+var TAG = '[email_reporter.js]';
 
 // Secure SMTP transporter
 var transporter = nodemailer.createTransport({
@@ -41,15 +41,21 @@ function report(data, callback) {
       from: to,
       to: to,
       subject: data.subject,
-      text: data.text
     };
+
+    if (data.html) {
+      message.html = data.html;
+    }
+    else {
+      message.text = data.text;
+    }
     
     transporter.sendMail(message, function(err, info) {
       if (err) {
         return console.log(err);
       }
 
-      callback(null, 'Error reported successfully.');
+      callback(null, 'Reported successfully.');
     });
   }
 }

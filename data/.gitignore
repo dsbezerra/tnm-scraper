@@ -4,3 +4,4 @@
 !.gitignore
 !extracted_tmp
 !cron
+!email_templates

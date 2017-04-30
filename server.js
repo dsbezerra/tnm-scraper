@@ -5,7 +5,7 @@ const bodyParser   = require('body-parser');
 const compression  = require('compression');
 const logger       = require('morgan');
 
-const reportTo  = require('./src/error_reporter');
+const reportTo  = require('./src/email_reporter');
 
 const ScheduleController = require('./controllers/schedule');
 const FilesController = require('./src/controllers/files');
@@ -32,7 +32,6 @@ process.on('uncaughtException', function (err) {
     });
   }
 });
-
 
 // Middlewares
 app.use(compression());

@@ -11,7 +11,7 @@ var Result = require('./src/models/result');
 
 var fileutils = require("./src/utils/fileutils");
 
-var reportTo = require('./src/error_reporter');
+var reportTo = require('./src/email_reporter');
 var scrape = require('./index');
 
 var SCRAPERS_DIR = process.env.OPENSHIFT_DATA_DIR + '/scrapers' || './scrapers';

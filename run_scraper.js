@@ -10,6 +10,9 @@ var secrets = require('./config/secrets');
 const Scraper = require('./src/models/scraper');
 const Result  = require('./src/models/result');
 
+var reportTo = require('./src/email_reporter');
+var reportutils = require('./src/utils/reportutils');
+
 var SCRAPER_ID = process.argv[2];
 
 if (!SCRAPER_ID) {
@@ -103,20 +106,46 @@ function run(scraper) {
               saved++;
 
               if (saved === results.length) {
-                console.log('All results saved.');
-                process.exit(0);
-                return;
+                updateRunning(scraper, false, function(err) {
+                  if (err) {
+                    console.log(err);
+                  }
+                  console.log('All results saved.');
+
+                  //
+                  // Send report e-mail
+                  //
+                  reportTo({
+                    subject: '[Relatório de Execução] ' + scraper.name,
+                    html: createScraperReportHTML(scraper, task.stats),
+                  }, function (err) {
+
+                    // Ignore error
+                    process.exit(0);
+                  })
+                });
               }
             } else {
-
-              console.log(err);
-              process.exit(1);
+              updateRunning(scraper, false, function(err) {
+                if (err) {
+                  console.log(err);
+                }
+                process.exit(0);
+              });
             }              
           });
         }
       } else {
-        console.log('Nothing new... exitting process.');
-        process.exit(0);
+  
+        updateRunning(scraper, false, function(err) {
+          if (err) {
+            console.log(err);
+          }
+
+          console.log('Nothing new... exitting process.');
+          process.exit(0);
+        });
+        
       }
     }
   });
@@ -126,13 +155,6 @@ function run(scraper) {
   //
   task.on('start', function(message) {
     updateRunning(scraper, true);
-  });
-
-  //
-  // Set scraper to not running
-  //
-  task.on('finish', function(message) {
-    updateRunning(scraper, false);
   });
 }
 
@@ -204,7 +226,7 @@ function queryScraper(callback) {
 //
 // Updates scraper running state
 //
-function updateRunning(scraper, running) {
+function updateRunning(scraper, running, callback) {
 
   //
   // Updates scraper running state in database
@@ -220,6 +242,13 @@ function updateRunning(scraper, running) {
   Scraper.update({
     _id: scraper._id
   }, objectAssign(scraper, updated), function (err, raw) {
-    // ignore
+    if (callback) {
+      if (err) {
+        return callback(err);
+      }
+      else {
+        return callback(null);
+      }
+    }    
   });
 }
