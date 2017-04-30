@@ -49,7 +49,7 @@ module.exports = {
         //
         // Replace total extracted
         //
-        html = stringutils.replace(html, /%extracted_bidddings%/, stats.totalExtracted);
+        html = stringutils.replace(html, /%extracted_biddings%/, stats.totalExtracted);
         
         //
         // Replace link
