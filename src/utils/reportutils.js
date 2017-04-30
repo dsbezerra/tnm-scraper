@@ -5,7 +5,10 @@ var stringutils = require('./stringutils');
 var reportTo = require('../email_reporter');
 
 var SCRAPER_URI = 'https://scraper-tnmwebapp.rhcloud.com';
-var SCRAPER_REPORT_MODEL_PATH = '../../data/email_templates/scraper_results_report.html';
+
+var SCRAPER_REPORT_MODEL_PATH = process.env.OPENSHIFT_REPO_DIR
+                              ? process.env.OPENSHIFT_REPO_DIR + '/data/email_templates/scraper_results_report.html'
+                              : '../../data/email_templates/scraper_results_report.html'; 
 
 module.exports = {
   //
