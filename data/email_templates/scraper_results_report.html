@@ -1,0 +1,141 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Resultados da Execução do Scraper</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <style>
+
+     p {
+       margin: 0;
+     }
+     
+     .header {
+       padding: 24px 10px 24px 5px;
+       color: white;
+     }
+
+     .header > img {
+       width: 200px;
+     }
+
+     .footer {
+       color: #fff;
+       padding: 10px 0px 10px 0px;
+     }
+     
+     .main-text {
+       font-family: Helvetica;
+       font-size: 18px;
+       color: rgba(0, 0, 0, 0.8);
+     }
+
+     .main-body {
+       padding: 24px 24px 24px 24px;
+       text-align: center;
+     }
+
+     .highlight {
+       color: #ff9800;
+       font-weight: 600;
+     }
+
+     .divider {
+       width: 60%;
+       height: 1px;
+       background-color: rgba(0, 0, 0, 0.05);
+       margin: 20px 0px 20px 0px;
+       text-align: center;
+       display: inline-block;
+     }
+
+     .info-box {
+       padding: 2px 12px 2px 12px;
+       background-color: rgba(0, 0, 0, 0.02);
+       border: 1px solid rgba(0, 0, 0, 0.05);
+     }
+
+     .info-box > p {
+       margin: 6px 0px 6px 0px;
+     }
+
+     .see-pending {
+       border: 0;
+       background-color: #ff9800;
+       color: #fff;
+       height: 36px;
+       font-family: Helvetica;
+       font-size: 18px;
+       outline: none;
+       padding: 6px 12px 6px 12px;
+     }
+
+     .see-pending:hover {
+       background-color: #ff5600;
+       cursor: pointer;
+     }
+     
+    </style>
+    
+    <body style="margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;padding-top:0;padding-bottom:0;padding-right:0;padding-left:0;" >
+      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="font-family:Helvetica;" >
+        <tr>
+          <td>
+            <table align="center" border="1" bordercolor="#ff9800" cellpadding="0" cellspacing="0" width="600" style="border-collapse:collapse;" >
+              <tr>
+                <td align="center" bgcolor="#ff9800" class="header" style="padding-top:24px;padding-bottom:24px;padding-right:10px;padding-left:5px;color:white;" >
+                  <img src="https://www.tnmlicitacoes.com/img/logo.png" style="width:200px;" />
+                </td>
+              </tr>
+              <tr>
+                <td align="center" style="padding-top:24px;padding-bottom:24px;padding-right:24px;padding-left:24px;" >
+                  <p style="color:#ff9800;font-size:28px;font-weight:600;margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;" >Relatório de Execução</p>
+                  <p class="main-text" style="margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;font-family:Helvetica;font-size:18px;color:rgba(0, 0, 0, 0.8);" >%scraper_name%</p>
+                </td>
+              </tr>
+              <tr>
+                <td class="main-body" style="padding-top:24px;padding-bottom:24px;padding-right:24px;padding-left:24px;text-align:center;" >
+                  <p class="main-text" style="margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;font-family:Helvetica;font-size:18px;color:rgba(0, 0, 0, 0.8);" >O scraper <span class="highlight" style="color:#ff9800;font-weight:600;" >%scraper_name%</span> encontrou <span class="highlight" style="color:#ff9800;font-weight:600;" >%new_biddings%</span> novas licitações.</p>
+                  <div class="divider" style="width:60%;height:1px;background-color:rgba(0, 0, 0, 0.05);margin-top:20px;margin-bottom:20px;margin-right:0px;margin-left:0px;text-align:center;display:inline-block;" > </div>
+
+                  <table align="center" >
+                    <tr>
+                      <td>
+                        <p style="margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;" ><span class="highlight" style="color:#ff9800;font-weight:600;" >Detalhes Completos</span></p>
+                        <br/>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td align="center" class="info-box" style="padding-top:2px;padding-bottom:2px;padding-right:12px;padding-left:12px;background-color:rgba(0, 0, 0, 0.02);border-width:1px;border-style:solid;border-color:rgba(0, 0, 0, 0.05);" >
+                        <p style="margin-top:6px;margin-bottom:6px;margin-right:0px;margin-left:0px;" ><span class="highlight" style="color:#ff9800;font-weight:600;" >Data de Execução</span> %execution_time%</p>
+                        <p style="margin-top:6px;margin-bottom:6px;margin-right:0px;margin-left:0px;" ><span class="highlight" style="color:#ff9800;font-weight:600;" >Licitações Encontradas</span> %found_biddings%</p>
+                        <p style="margin-top:6px;margin-bottom:6px;margin-right:0px;margin-left:0px;" ><span class="highlight" style="color:#ff9800;font-weight:600;" >Licitações Novas</span> %new_biddings%</p>
+                        <p style="margin-top:6px;margin-bottom:6px;margin-right:0px;margin-left:0px;" ><span class="highlight" style="color:#ff9800;font-weight:600;" >Licitações Extraídas</span> %extracted_biddings%</p>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <div class="divider" style="width:60%;height:1px;background-color:rgba(0, 0, 0, 0.05);margin-top:20px;margin-bottom:20px;margin-right:0px;margin-left:0px;text-align:center;display:inline-block;" > </div>
+
+                  <br/>
+                  
+                  <a href="%scraper_details_page%" target="blank">
+                    <button class="see-pending" style="border-width:0;background-color:#ff9800;color:#fff;height:36px;font-family:Helvetica;font-size:18px;outline-style:none;padding-top:6px;padding-bottom:6px;padding-right:12px;padding-left:12px;" >
+                      Ver Pendentes
+                    </button>
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td align="center" bgcolor="#ff9800" class="footer" style="color:#fff;padding-top:10px;padding-bottom:10px;padding-right:0px;padding-left:0px;" >
+                  <p style="margin-top:0;margin-bottom:0;margin-right:0;margin-left:0;" >TáNaMão Licitações %year%</p>
+                </td>
+              </tr>
+            </table>
+          </td>
+        </tr>
+      </table>
+    </body>
+  </head>
+</html>
