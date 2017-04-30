@@ -117,12 +117,12 @@ function run(scraper) {
                   //
                   reportTo({
                     subject: '[Relatório de Execução] ' + scraper.name,
-                    html: createScraperReportHTML(scraper, task.stats),
+                    html: reportutils.createScraperReportHTML(scraper, task.stats),
                   }, function (err) {
 
                     // Ignore error
                     process.exit(0);
-                  })
+                  });
                 });
               }
             } else {
@@ -141,9 +141,18 @@ function run(scraper) {
           if (err) {
             console.log(err);
           }
-
-          console.log('Nothing new... exitting process.');
-          process.exit(0);
+          
+          //
+          // Send report e-mail
+          //
+          reportTo({
+            subject: '[Relatório de Execução] ' + scraper.name,
+            html: reportutils.createScraperReportHTML(scraper, task.stats),
+          }, function (err) {
+            console.log('Nothing new... exitting process.');
+            // Ignore error
+            process.exit(0);
+          });
         });
         
       }
