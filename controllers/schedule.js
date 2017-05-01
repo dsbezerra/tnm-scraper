@@ -21,25 +21,29 @@ module.exports = {
   get: function (req, res) {
     var id = req.params.id;
     if (id) {
-      Schedule.find({
-        _id: id,
-      }, {
-        __v: false,
-      }, function (err, schedule) {
 
-        if (err) {
-          return res.status(500)
-                    .send({
-                      success: false,
-                      message: err.message,
-                    });
-        }
+      //
+      // Find one matching the id passed including the scraper document
+      //
+      Schedule
+        .findOne({ _id: id }, {
+          __v: false,
+        })
+        .populate('scraper', 'name')
+        .exec(function(err, schedule) {
+          if (err) {
+            return res.status(500)
+                      .send({
+                        success: false,
+                        message: err.message,
+                      });
+          }
 
-        return res.send({
-          success: true,
-          data: schedule,
+          return res.send({
+            success: true,
+            data: schedule,
+          });
         });
-      });
     } else {
       return res.send({
         success: false,
@@ -63,24 +67,29 @@ module.exports = {
         filter = null;
       }
     }
-    
-    Schedule.find(objectAssign({}, filter), {
-      __v: false,
-    }, function (err, schedules) {
 
-      if (err) {
-        return res.status(500)
-                  .send({
-                    success: false,
-                    message: err.message,
-                  });
-      }
+    //
+    // Find all that match filter including scraper document
+    //
+    Schedule
+      .find(objectAssign({}, filter), {
+        __v: false,
+      })
+      .populate('scraper', 'name')
+      .exec(function(err, schedules) {
+        if (err) {
+          return res.status(500)
+                    .send({
+                      success: false,
+                      message: err.message,
+                    });
+        }
 
-      return res.send({
-        success: true,
-        data: schedules,
+        return res.send({
+          success: true,
+          data: schedules,
+        });
       });
-    })
   },
 
   //
