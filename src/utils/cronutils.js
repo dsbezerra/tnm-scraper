@@ -91,8 +91,8 @@ module.exports = {
 
     var result = false;
 
-    //console.log('Field name: %s', fieldName);
-    //console.log('Field value: %s', value);
+    console.log('Field name: %s', fieldName);
+    console.log('Field value: %s', value);
     
     var size = value.length;
     if (size === 1) {
@@ -106,11 +106,15 @@ module.exports = {
         }
 
         var range = ALLOWED_VALUES[fieldName];
+        console.log('Range:');
+        console.log(range);
         if (range) {
           var start = range[0];
           var end   = range[1];
           result = test >= start && test <= end;
         }
+
+        console.log('Result: %s', result);
       }
     } else {
 
