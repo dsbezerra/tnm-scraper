@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Scraper to be executed
+scraper_id=%scraper_id%
+
+# Script execution time
+script_execution_time_in_minutes=%time%
+
+# Get current time of server
+# Get hour
+current_time_hour=$(date +%H)
+# Remove leading zero if exists
+current_time_hour=${current_time_hour#0}
+
+# Get minutes
+current_time_minute=$(date +%M)
+# Remove leading zero if exists
+current_time_minute=${current_time_minute#0}
+
+# Script execution week day
+script_execution_week=%week_day%
+
+# Current week
+current_week_day=$(date +%w)
+
+# Convert hour to minutes and add to minutes to get the total minutes
+((total_minutes = current_time_hour * 60 + $current_time_minute))
+
+if [ $current_week_day -eq $script_execution_week ] && [ $total_minutes -eq $script_execution_time_in_minutes ] ; then
+    node $OPENSHIFT_REPO_DIR/run_scraper.js $scraper_id
+else
+    echo "Exitting execution of scraper $scraper_id, not in time of execution"
+    exit 0
+fi

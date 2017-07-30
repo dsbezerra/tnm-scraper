@@ -10,5 +10,5 @@ git update-index --chmod=+x .openshift/action_hooks/post_deploy
 
 git add .
 git commit --allow-empty -m "%commit_msg%"
-git push
+git push -u openshift master
 

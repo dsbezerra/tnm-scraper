@@ -4,4 +4,4 @@ IF [%1] == [] SET commit_msg=Update
 
 git add .
 git commit -m "%commit_msg%"
-git push -u gitlab master
+git push -u origin master

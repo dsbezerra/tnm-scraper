@@ -9,7 +9,10 @@ var cronutils = require('../src/utils/cronutils');
 var fileutils = require('../src/utils/fileutils');
 var stringutils = require('../src/utils/stringutils');
 
-var CRON_DIR = process.env.OPENSHIFT_DATA_DIR + '/cron' || './data/cron';
+var CRON_DIR = './data/cron';
+if (process.env.OPENSHIFT_DATA_DIR) {
+  CRON_DIR = process.env.OPENSHIFT_DATA_DIR + '/cron';
+}
 var WEEKLY_MODEL_PATH = './data/cron/weekly_model';
 var DAILY_MODEL_PATH = './data/cron/daily_model';
 
@@ -324,8 +327,8 @@ function createFile(scraperId, cron, frequency) {
     //
     // Save all to minutely folder
     //
-    var writePath = CRON_DIR + '/minutely/' + fileName;
-    var filePath = path.resolve(writePath);
+    var writePath = 'minutely/' + fileName;
+    var filePath = path.join(CRON_DIR, writePath);
 
     console.log('Creating file at: %s', filePath);
     
