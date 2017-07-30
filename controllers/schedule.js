@@ -278,6 +278,9 @@ module.exports = {
 // Create a cron script and save in the specified frequency folder
 //
 function createFile(scraperId, cron, frequency) {
+  console.time('create_cron_file');
+  
+  var result;
 
   var modelPath = frequency === 'weekly' ? WEEKLY_MODEL_PATH : DAILY_MODEL_PATH;
   var modelFile = fileutils.readFile(path.resolve(modelPath), { encoding: 'utf8' });
@@ -291,6 +294,8 @@ function createFile(scraperId, cron, frequency) {
     var week    = cronutils.getWeekday(cron);
     
     var newFile = modelFile;
+
+    console.time('create_cron_file_replace_placeholders');
 
     //
     // Replace scraper_id
@@ -309,6 +314,8 @@ function createFile(scraperId, cron, frequency) {
     //
     var totalMinutes = (hours * 60) + minutes;
     newFile = stringutils.replace(newFile, /%time%/, totalMinutes);
+
+    console.timeEnd('create_cron_file_replace_placeholders');
 
     //
     // Save to disk
@@ -332,7 +339,7 @@ function createFile(scraperId, cron, frequency) {
       exec('cp ' + filePath + ' $OPENSHIFT_REPO_DIR/.openshift/cron/minutely');
     }
 
-    return {
+    result = {
       name: fileName,
       path: filePath,
       minutes: Number(minutes),
@@ -341,6 +348,10 @@ function createFile(scraperId, cron, frequency) {
       frequency: frequency,
     }
   }
+
+  console.timeEnd('create_cron_file');
+  
+  return result;
 };
 
 //

@@ -1,4 +1,3 @@
-
 var url = require('url');
 var stringutils = require('../utils/stringutils');
 
@@ -20,11 +19,11 @@ function extractDownloadInfo(selector, currentURI, container, page) {
   var result = null;
 
   if (!selector) return result;
-  
-  var $ = page;  
+
+  var $ = page;
 
   var element = $(selector);
-  var href = element.attr('href'); 
+  var href = element.attr('href');
   var text = element.text().trim();
   var lowerCaseText = text.toLowerCase();
 
@@ -50,7 +49,7 @@ function extractDownloadInfo(selector, currentURI, container, page) {
     var functionName = extractJavascriptFunctionNameFrom(href);
     // What to do in this case?
   }
-  
+
   return result;
 }
 
@@ -59,12 +58,13 @@ function extractDownloadInfo(selector, currentURI, container, page) {
  * @param {string} string String to be checked
  */
 function isFileDownloadLink(string) {
-  if(!string) return false;
+  if (!string) return false;
   var test = string.toLowerCase();
   return (
-    endsWith(test, '\\.pdf') || endsWith(test, '\\.doc') ||
+    endsWith(test, '\\.pdf')  || endsWith(test, '\\.doc') ||
     endsWith(test, '\\.docx') || endsWith(test, '\\.zip') ||
-    endsWith(test, '\\.rar') || endsWith(test, '\\.odt')
+    endsWith(test, '\\.rar')  || endsWith(test, '\\.odt') ||
+    endsWith(test, '\\.7z')
   );
 }
 
@@ -72,15 +72,15 @@ function isFileDownloadLink(string) {
  * Gets the javascript function name from a html string
  */
 function extractJavascriptFunctionNameFrom(string) {
-  if(!string) return '';
-  
+  if (!string) return '';
+
   var name = '';
   var i = 0;
   var extracting = false;
   var readingParameters = false;
   var c = string.charAt(i);
-  while(c) {
-    switch(c) {
+  while (c) {
+    switch (c) {
       case '(':
         readingParameters = true;
         break;
@@ -92,21 +92,21 @@ function extractJavascriptFunctionNameFrom(string) {
       case ':':
         extracting = true;
         break;
-        
+
       default:
         {
-          if(extracting && !readingParameters) {
+          if (extracting && !readingParameters) {
             name += c;
           }
         } break;
     }
-    
+
     c = string.charAt(++i);
-    
-    if(readingParameters)
+
+    if (readingParameters)
       break;
   }
-  
+
   return name;
 }
 
@@ -115,7 +115,7 @@ function extractJavascriptFunctionNameFrom(string) {
  * @param {string} tring String to be checked
  */
 function isJavascriptFunction(string) {
-  if(!string) return false;
+  if (!string) return false;
   var test = string.toLowerCase();
   return stringutils.startsWith(test, 'javascript');
 }

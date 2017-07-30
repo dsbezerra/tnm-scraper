@@ -9,16 +9,16 @@ var checkForDoPostBack = require('./checkForDoPostBack');
  */
 function extractLink(item, selector) {
   var link = '';
-  if(!selector) {
+  if (!selector) {
     link = item.find('a');
   }
   else {
     link = item.find(selector);
   }
 
-  if(link) {
+  if (link) {
     var href = link.attr('href');
-    if(href) {
+    if (href) {
       href = checkForDoPostBack(href);
       link = href;
     }

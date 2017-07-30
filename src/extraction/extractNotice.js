@@ -15,26 +15,26 @@ moment.locale('pt-BR');
 // Used when converting String -> Number
 //
 var MODALITIES = {
-  'pp'                   : 0,
-  'pregão presencial'    : 0,
-  
-  'pe'                   : 1,
-  'pregão eletrônico'    : 1,
+  'pp': 0,
+  'pregão presencial': 0,
 
-  'concorrência'         : 2,
-  'concorrência pública' : 2,
-  'cp'                   : 2,
-  
-  'convite'              : 3,
-  
-  'concurso'             : 4,
+  'pe': 1,
+  'pregão eletrônico': 1,
 
-  'leilão'               : 5,
+  'concorrência': 2,
+  'concorrência pública': 2,
+  'cp': 2,
 
-  'tomada de preço'      : 6,
-  'tomada de preços'     : 6,
+  'convite': 3,
 
-  'convênio'             : 7
+  'concurso': 4,
+
+  'leilão': 5,
+
+  'tomada de preço': 6,
+  'tomada de preços': 6,
+
+  'convênio': 7
 };
 
 //
@@ -62,8 +62,8 @@ function extractNotice(page, selectors, patterns, currentURI) {
   // If we use body as container, most of the content will be extracted using regular expressions.
   // That means that regular expressions must be well defined if we want to get correct data.
   //
-  var container = selectors.container ? $(selectors.container) : $('body'); 
-  
+  var container = selectors.container ? $(selectors.container) : $('body');
+
   var result = {
 
     //
@@ -81,7 +81,7 @@ function extractNotice(page, selectors, patterns, currentURI) {
     // Can be only initials or the full name
     //
     agency: extractText(container, selectors.agency, patterns.agency),
-    
+
     //
     // Extract the notice number as text from selectors/patterns
     //
@@ -113,14 +113,14 @@ function extractNotice(page, selectors, patterns, currentURI) {
   //
   // Convert date results from text to date format
   //
-  if(result.openDate) {
+  if (result.openDate) {
     result.openDate = convertToDateFormat(result.openDate);
   }
 
-  if(result.publishDate) {
+  if (result.publishDate) {
     result.publishDate = convertToDateFormat(result.publishDate);
   }
-  
+
   return result;
 }
 
@@ -132,9 +132,9 @@ function extractNotice(page, selectors, patterns, currentURI) {
 function convertToDateFormat(dateString) {
   var date;
 
-  if(dateString.indexOf('/') > -1)
+  if (dateString.indexOf('/') > -1)
     date = convertToDate('/', dateString);
-  else if(dateString.indexOf('-') > -1)
+  else if (dateString.indexOf('-') > -1)
     date = convertToDate('-', dateString);
 
   return date;
@@ -147,21 +147,21 @@ function convertToDateFormat(dateString) {
 // @return {object} Returns a javascript date if sucessfull, undefined if not.
 //
 function convertToDate(delimiter, string) {
-  if(!string)
+  if (!string)
     return undefined;
 
-  if(!delimiter)
+  if (!delimiter)
     return undefined;
 
   var parts = string.split(delimiter);
-  if(parts.length === 3) {
+  if (parts.length === 3) {
     // TODO(diego): Do more checks here...
-    var year  = Number(parts[2]),
-        month = addZero(Number(parts[1])),
-        day   = addZero(Number(parts[0]));
-    
+    var year = Number(parts[2]),
+      month = addZero(Number(parts[1])),
+      day = addZero(Number(parts[0]));
+
     var dateString = year + '-' + month + '-' + day;
-    return moment(dateString).hours(3).format();  
+    return moment(dateString).hours(3).format();
   }
 
   return undefined;
@@ -172,8 +172,8 @@ function convertToDate(delimiter, string) {
 //
 function addZero(i) {
   if (i < 10)
-    i = '0'  + i;
-  
+    i = '0' + i;
+
   return i;
 }
 

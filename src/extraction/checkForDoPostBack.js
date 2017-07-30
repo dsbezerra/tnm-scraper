@@ -9,12 +9,12 @@ var stringutils = require('../utils/stringutils');
  */
 function checkForDoPostBack(href) {
 
-  if(!href) {
+  if (!href) {
     return null;
   }
-  
+
   var doPostBackIndex = href.indexOf('__doPostBack');
-  if(doPostBackIndex < 0)
+  if (doPostBackIndex < 0)
     return href;
 
   var value = stringutils.getSubStringBetween("'", href);

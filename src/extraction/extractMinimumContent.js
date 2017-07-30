@@ -12,23 +12,23 @@ var extractLink = require('./extractLink');
 function extractMinimumContent(item, selectors, patterns) {
   var extracted = {};
 
-  if(selectors.modality)
+  if (selectors.modality)
     extracted.modality = extractText(item, selectors.modality, patterns.modality);
-  if(selectors.agency)
+  if (selectors.agency)
     extracted.agency = extractText(item, selectors.agency, patterns.agency);
-  if(selectors.number)
+  if (selectors.number)
     extracted.number = extractText(item, selectors.number, patterns.number);
-  if(selectors.openDate)
+  if (selectors.openDate)
     extracted.openDate = extractText(item, selectors.openDate, patterns.openDate);
-  if(selectors.publishDate)
+  if (selectors.publishDate)
     extracted.publishDate = extractText(item, selectors.publishDate, patterns.publishDate);
-  if(selectors.description)
+  if (selectors.description)
     extracted.description = extractText(item, selectors.description, patterns.description);
-  if(selectors.link)
+  if (selectors.link)
     extracted.link = extractLink(item, selectors.link);
   else
     return {};
-  
+
   return extracted;
 }
 
