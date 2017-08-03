@@ -224,7 +224,7 @@ module.exports = {
                 //
                 if (process.env.OPENSHIFT_REPO_DIR) {
                   var exec = require('child_process').exec;
-                  exec('rm ' + process.env.OPENSHIFT_REPO_DIR + '/.openshift/cron/minutely/' + schedule.fileName);
+                  exec('rm $OPENSHIFT_REPO_DIR/.openshift/cron/minutely/' + schedule.fileName);
                 }
               }
 
