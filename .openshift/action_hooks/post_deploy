@@ -1,3 +1,3 @@
 # Move cron scripts from DATA_DIR to REPO_DIR
 
-cp -a $OPENSHIFT_DATA_DIR/cron/minutely/. $OPENSHIFT_REPO_DIR/cron/minutely/ 
+cp -a $OPENSHIFT_DATA_DIR/cron/minutely/. $OPENSHIFT_REPO_DIR/.openshift/cron/minutely/ 
