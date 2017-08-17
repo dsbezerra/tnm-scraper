@@ -346,7 +346,28 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
                                     err.code));
         }
         
-        return res.send(makeResponse(true, pending));
+        const { include } = req.query;
+        if (include && include === 'scraper') {
+          Scraper
+            .findById(id)
+            .exec(function(err, scraper) {
+              if (err) {
+                console.log(err);
+              }
+
+              return res.send({
+                success: true,
+                result: {
+                  data: {
+                    scraper: scraper,
+                    results: pending,
+                  },
+                },
+              });
+            });
+        } else {
+          return res.send(makeResponse(true, pending));
+        }
       });
   } 
   else {
