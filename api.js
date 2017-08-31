@@ -346,7 +346,7 @@ ScraperAPI.prototype.getPendingFromScraper = function(req, res) {
                                     err.code));
         }
         
-        const { include } = req.query;
+        var include = req.query.include;
         if (include && include === 'scraper') {
           Scraper
             .findById(id)
